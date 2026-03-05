@@ -440,7 +440,7 @@ function main(config) {
     });
   });
 
-  // 添加通用兜底策略组
+  // 添加其他策略组
   functionalGroups.push(
     {
       ...groupBaseOption,

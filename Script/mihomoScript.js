@@ -529,23 +529,18 @@ function main(config) {
       }),
   );
 
-  // 先匹配倍率，后匹配地区
+  // 节点组分类
   const lowGroup = regionGroups['低倍率节点'];
   const highGroup = regionGroups['高倍率节点'];
-
   const otherProxies = [];
-  const remainProxies = [];
 
-  // 倍率分类
   for (const proxy of proxies) {
     const name = proxy.name;
-
     if (
       regionDefinitionsEnable['低倍率节点'] &&
       regionDefinitions.find((r) => r.name === '低倍率节点').regex.test(name)
     ) {
       lowGroup.proxies.push(name);
-      continue;
     }
 
     if (
@@ -553,16 +548,9 @@ function main(config) {
       regionDefinitions.find((r) => r.name === '高倍率节点').regex.test(name)
     ) {
       highGroup.proxies.push(name);
-      continue;
     }
 
-    remainProxies.push(name);
-  }
-
-  // 地区分类
-  for (const name of remainProxies) {
     let matched = false;
-
     for (const region of regionDefinitions) {
       if (region.name === '低倍率节点' || region.name === '高倍率节点')
         continue;

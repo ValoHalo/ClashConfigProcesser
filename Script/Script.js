@@ -27,46 +27,6 @@ const regionDefinitions = [
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png',
   },
   {
-    name: '台湾省',
-    regex: /(?=.*(台湾|🇹🇼|TW|[Tt]ai\s*[Ww]an))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png',
-  },
-  {
-    name: '韩国',
-    regex: /(?=.*(韩|🇰🇷|KR|[Kk]orea))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Korea.png',
-  },
-  {
-    name: '英国',
-    regex: /(?=.*(英|🇬🇧|UK|[Uu]nited\s*[Kk]ingdom|[Bb]ritain))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/United_Kingdom.png',
-  },
-  {
-    name: '德国',
-    regex: /(?=.*(德国|🇩🇪|DE|[Gg]ermany))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Germany.png',
-  },
-  {
-    name: '法国',
-    regex: /(?=.*(法国|🇫🇷|FR|[Ff]rance))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/France.png',
-  },
-  {
-    name: '加拿大',
-    regex: /(?=.*(加拿大|🇨🇦|CA|[Cc]anada))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Canada.png',
-  },
-  {
-    name: '澳大利亚',
-    regex: /(?=.*(澳大利亚|🇦🇺|AU|[Aa]ustralia))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Australia.png',
-  },
-  {
-    name: '俄罗斯',
-    regex: /(?=.*(俄罗斯|🇷🇺|RU|[Rr]ussia))/u,
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Russia.png',
-  },
-  {
     name: '低倍率节点',
     regex: /^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|下载|低倍)/u,
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Available_1.png',
@@ -345,38 +305,26 @@ function main(config) {
       }),
   );
 
-  // 先匹配倍率，后匹配地区
+  // 节点组分类
   const lowGroup = regionGroups['低倍率节点'];
   const highGroup = regionGroups['高倍率节点'];
-
   const otherProxies = [];
-  const remainProxies = [];
 
-  // 倍率分类
   for (const proxy of proxies) {
     const name = proxy.name;
-
     if (
       regionDefinitions.find((r) => r.name === '低倍率节点').regex.test(name)
     ) {
       lowGroup.proxies.push(name);
-      continue;
     }
 
     if (
       regionDefinitions.find((r) => r.name === '高倍率节点').regex.test(name)
     ) {
       highGroup.proxies.push(name);
-      continue;
     }
 
-    remainProxies.push(name);
-  }
-
-  // 地区分类
-  for (const name of remainProxies) {
     let matched = false;
-
     for (const region of regionDefinitions) {
       if (region.name === '低倍率节点' || region.name === '高倍率节点')
         continue;
@@ -605,17 +553,17 @@ function main(config) {
     'RULE-SET,private,直连',
     'RULE-SET,private_ip,直连,no-resolve',
 
-    // 进程规则
-    'PROCESS-NAME,com.perol.pixez,Pixiv', // Pixez
-    'PROCESS-NAME,com.perol.play.pixez,Pixiv', // Pixez Google Play 版
-    'RULE-SET,DownloadApps,下载专用', // 常见磁力下载软件
-
     // 国内直连
     'RULE-SET,steam_cn,直连',
     'RULE-SET,epicgames,直连',
     'RULE-SET,nvidia_cn,直连',
     'RULE-SET,microsoft_cn,直连',
     'DOMAIN-SUFFIX,fsend.cn,直连',
+
+    // 进程规则
+    'PROCESS-NAME,com.perol.pixez,Pixiv', // Pixez
+    'PROCESS-NAME,com.perol.play.pixez,Pixiv', // Pixez Google Play 版
+    'RULE-SET,DownloadApps,下载专用', // 常见磁力下载软件
 
     // 广告拦截
     'RULE-SET,adblockmihomolite,广告拦截',

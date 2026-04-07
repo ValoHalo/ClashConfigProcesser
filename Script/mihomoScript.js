@@ -24,6 +24,7 @@ const ruleOptionsEnable = {
   telegram: true, // Telegram通讯软件
   twitter: true, // Twitter社交平台
   steam: true, // Steam游戏平台
+  cloudflare: true, // Cloudflare服务
   pixiv: true, // Pixiv绘画网站
   emby: true, // Emby媒体服务
   spotify: true, // Spotify音乐服务
@@ -368,6 +369,18 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs',
     path: './ruleset/netflix_ip.mrs',
   },
+  cloudflare: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cloudflare.mrs',
+    path: './ruleset/cloudflare.mrs',
+  },
+  cloudflare_ip: {
+    ...ruleProviderCommonIpcidr,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cloudflare.mrs',
+    path: './ruleset/cloudflare_ip.mrs',
+  },
 };
 
 // --- 2. 功能策略组数据结构 ---
@@ -429,6 +442,15 @@ const serviceConfigs = [
     rules: [
       'RULE-SET,telegram,Telegram',
       'RULE-SET,telegram_ip,Telegram,no-resolve',
+    ],
+  },
+  {
+    key: 'cloudflare',
+    name: 'Cloudflare',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cloudflare.png',
+    rules: [
+      'RULE-SET,cloudflare,Cloudflare',
+      'RULE-SET,cloudflare_ip,Cloudflare,no-resolve',
     ],
   },
   {

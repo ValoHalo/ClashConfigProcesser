@@ -50,6 +50,7 @@ https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/mihomo
 - `GitHub`
 - `Microsoft`
 - `Telegram`
+- `Cloudflare`
 - `Pixiv`
 - `Steam`
 - `Twitter`

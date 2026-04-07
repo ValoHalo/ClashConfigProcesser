@@ -238,6 +238,14 @@ rule-providers:
     <<: *rp_ip
     format: mrs
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs'
+  cloudflare:
+    <<: *rp_domain
+    format: mrs
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cloudflare.mrs'
+  cloudflare_ip:
+    <<: *rp_ip
+    format: mrs
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cloudflare.mrs'
 
 # --- 策略组 (Proxy Groups) ---
 
@@ -331,6 +339,10 @@ proxy-groups:
   - name: 'Telegram'
     <<: [*group_common_select, *proxies]
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png'
+
+  - name: 'Cloudflare'
+    <<: [*group_common_select, *proxies]
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cloudflare.png'
 
   - name: 'Pixiv'
     <<: [*group_common_select, *proxies]
@@ -466,6 +478,7 @@ rules:
   - RULE-SET,github,GitHub
   - RULE-SET,microsoft,Microsoft
   - RULE-SET,telegram,Telegram
+  - RULE-SET,cloudflare,Cloudflare
   - RULE-SET,pixiv,Pixiv
   - RULE-SET,steam,Steam
   - RULE-SET,twitter,Twitter
@@ -479,6 +492,7 @@ rules:
   - RULE-SET,google_ip,Google,no-resolve
   - RULE-SET,telegram_ip,Telegram,no-resolve
   - RULE-SET,twitter_ip,Twitter,no-resolve
+  - RULE-SET,cloudflare_ip,Cloudflare,no-resolve
   - RULE-SET,emby_ip,Emby,no-resolve
   - RULE-SET,netflix_ip,Netflix,no-resolve
 

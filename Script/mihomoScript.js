@@ -75,6 +75,7 @@ const rules = [
   'RULE-SET,steam_cn,直连',
   'RULE-SET,epicgames,直连',
   'RULE-SET,nvidia_cn,直连',
+  'RULE-SET,microsoft_cn,直连',
   'DOMAIN-SUFFIX,fsend.cn,直连',
 ];
 
@@ -212,6 +213,12 @@ const ruleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft.mrs',
     path: './ruleset/microsoft.mrs',
+  },
+  microsoft_cn: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft@cn.mrs',
+    path: './ruleset/microsoft@cn.mrs',
   },
   telegram: {
     ...ruleProviderCommonDomain,

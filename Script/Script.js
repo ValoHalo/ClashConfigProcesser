@@ -197,7 +197,7 @@ const ruleProviders = {
   cn: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
-    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs',
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs',
     path: './ruleset/cn.mrs',
   },
   cn_ip: {
@@ -505,14 +505,13 @@ function main(config) {
   // DNS 配置
   config['dns'] = {
     enable: true,
-    ipv6: true,
+    ipv6: false,
     listen: ':1053',
     'cache-algorithm': 'arc',
     'use-hosts': true,
     'use-system-hosts': true,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-range6': 'fc00::/18',
     'fake-ip-filter': [
       '*',
       'rule-set:private',
@@ -520,11 +519,10 @@ function main(config) {
       'rule-set:fakeip_filter',
       'rule-set:connectivity_check',
       'rule-set:cn',
-      'RULE-SET,steam_cn',
-      'RULE-SET,epicgames',
-      'RULE-SET,nvidia_cn',
-      'RULE-SET,microsoft_cn',
-      'DOMAIN-SUFFIX,fsend.cn',
+      'rule-set:steam_cn',
+      'rule-set:epicgames',
+      'rule-set:nvidia_cn',
+      'rule-set:microsoft_cn',
     ],
     'default-nameserver': ['114.114.114.114'],
     nameserver: ['1.1.1.1', '8.8.8.8'],
@@ -533,7 +531,6 @@ function main(config) {
       '*': 'system',
       '+.arpa': 'system',
       '+.internal.crop.com': '10.0.0.1',
-      'connectivitycheck.platform.hicloud.com,g.cn,fsend.cn': 'system',
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,microsoft_cn,microsoft,apple':
         'system',
     },

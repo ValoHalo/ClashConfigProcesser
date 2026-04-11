@@ -26,11 +26,11 @@ const ruleOptionsEnable = {
   twitter: true, // Twitter社交平台
   steam: true, // Steam游戏平台
   cloudflare: true, // Cloudflare服务
-  pixiv: true, // Pixiv绘画网站
-  emby: true, // Emby媒体服务
-  spotify: true, // Spotify音乐服务
-  tiktok: true, // TikTok短视频平台
-  netflix: true, // Netflix视频服务
+  pixiv: false, // Pixiv绘画网站，不使用SNI域前置更稳定，我一般直接走代理
+  emby: false, // Emby媒体服务
+  spotify: false, // Spotify音乐服务
+  tiktok: false, // TikTok短视频平台
+  netflix: false, // Netflix视频服务
   adblock: true, // 广告拦截
 };
 
@@ -114,7 +114,9 @@ const regionDefinitions = [
   {
     name: '高倍率节点',
     regex:
-      /(?:[*xX✕✖⨉]\s*(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?\s*(?:倍|[*xX✕✖⨉]))/u,
+      // /(?:[*xX✕✖⨉]\s*(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?\s*(?:倍|[*xX✕✖⨉]))/u,
+      /(?:[*xX×✕✖⨉]\s*(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?\s*(?:倍|[*xX×✕✖⨉]))/u,
+    // 添加标准数学乘号 ×
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Airport.png',
   },
 ];
@@ -390,7 +392,8 @@ const serviceConfigs = [
     name: 'YouTube',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png',
     rules: [
-      'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT', // 阻断 YouTube UDP 流量
+      // 'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT', // 阻断 YouTube UDP 流量
+      // 使用 Youtube Revanced 客户端中的设置禁用 QUIC
       'RULE-SET,youtube,YouTube',
     ],
   },
@@ -502,7 +505,10 @@ const serviceConfigs = [
     key: 'adblock',
     name: '广告拦截',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Advertising.png',
-    rules: ['RULE-SET,adblockmihomolite,广告拦截'],
+    rules: [
+      'RULE-SET,adblockmihomolite,广告拦截',
+      'GEOSITE,category-ads-all,广告拦截',
+    ],
     reject: true,
   },
 ];
@@ -534,10 +540,10 @@ function main(config) {
   const regionGroups = {};
   regionDefinitions.forEach(
     (r) =>
-      (regionGroups[r.name] = {
-        ...r,
-        proxies: [],
-      }),
+    (regionGroups[r.name] = {
+      ...r,
+      proxies: [],
+    }),
   );
 
   // 节点组分类
@@ -716,7 +722,7 @@ function main(config) {
     'MATCH,默认节点',
   ];
 
-  config['allow-lan'] = true;
+  // config['allow-lan'] = true;
   config['ipv6'] = true;
   config['bind-address'] = '*';
   config['unified-delay'] = true;
@@ -725,10 +731,10 @@ function main(config) {
   config['keep-alive-interval'] = 60;
   config['find-process-mode'] = 'strict';
 
-  config['external-controller'] = '[::]:9090';
-  config['external-ui'] = 'ui';
-  config['external-ui-url'] =
-    'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
+  // config['external-controller'] = '[::]:9090';
+  // config['external-ui'] = 'ui';
+  // config['external-ui-url'] =
+  //   'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
 
   config['profile'] = {
     'store-selected': true,
@@ -761,13 +767,14 @@ function main(config) {
     ],
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: ['1.1.1.1', '8.8.8.8'],
-    'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
+    // 'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
+    'proxy-server-nameserver': ['https://dns.alidns.com/dns-query#DIRECT'],
     'nameserver-policy': {
       '*': 'system',
       '+.arpa': 'system',
       '+.internal.crop.com': '10.0.0.1',
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':
-        ['223.5.5.5', '119.29.29.29'],
+        ['tls://dns.alidns.com', 'tls://dot.pub'],
     },
   };
 

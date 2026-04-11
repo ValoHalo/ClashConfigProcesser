@@ -524,7 +524,7 @@ function main(config) {
       'rule-set:nvidia_cn',
       'rule-set:microsoft_cn',
     ],
-    'default-nameserver': ['223.5.5.5'],
+    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: ['1.1.1.1', '8.8.8.8'],
     'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
     'nameserver-policy': {
@@ -532,7 +532,7 @@ function main(config) {
       '+.arpa': 'system',
       '+.internal.crop.com': '10.0.0.1',
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,microsoft_cn,microsoft,apple':
-        '223.5.5.5',
+        ['223.5.5.5', '119.29.29.29'],
     },
   };
 
@@ -558,7 +558,12 @@ function main(config) {
         ports: [443, 8443],
       },
     },
-    'skip-domain': ['Mijia Cloud', '+.oray.com', '+.push.apple.com'],
+    'skip-domain': [
+      'Mijia Cloud',
+      '+.oray.com',
+      '+.push.apple.com',
+      'cloudflare-ech.com',
+    ],
     'skip-dst-address': ['rule-set:telegram_ip'],
   };
 

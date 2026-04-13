@@ -766,7 +766,7 @@ function main(config) {
       'rule-set:cloudflare_cn',
     ],
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: ['https://v.recipes/dns-cn', 'tls://dns.alidns.com'],
+    nameserver: ['https://v.recipes/dns-cn'],
     'proxy-server-nameserver': ['https://dns.alidns.com/dns-query#DIRECT','https://doh.pub/dns-query#DIRECT'],
     'nameserver-policy': {
       // '*': 'system',

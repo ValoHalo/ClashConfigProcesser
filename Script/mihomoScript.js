@@ -26,7 +26,7 @@ const ruleOptionsEnable = {
   twitter: true, // Twitter社交平台
   steam: true, // Steam游戏平台
   cloudflare: true, // Cloudflare服务
-  pixiv: false, // Pixiv绘画网站，不使用SNI域前置更稳定，我一般直接走代理
+  pixiv: true, // Pixiv绘画网站
   emby: false, // Emby媒体服务
   spotify: false, // Spotify音乐服务
   tiktok: false, // TikTok短视频平台
@@ -753,7 +753,7 @@ function main(config) {
     'fake-ip-range': '198.18.0.1/16',
     'fake-ip-filter': [
       'rule-set:connectivity_check',
-      '*',
+      // '*',
       'rule-set:private',
       'rule-set:category_ntp',
       'rule-set:fakeip_filter',
@@ -766,15 +766,14 @@ function main(config) {
       'rule-set:cloudflare_cn',
     ],
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: ['1.1.1.1', '8.8.8.8'],
-    // 'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
-    'proxy-server-nameserver': ['https://dns.alidns.com/dns-query#DIRECT'],
+    nameserver: ['https://v.recipes/dns-cn', 'tls://dns.alidns.com'],
+    'proxy-server-nameserver': ['https://dns.alidns.com/dns-query#DIRECT','https://doh.pub/dns-query#DIRECT'],
     'nameserver-policy': {
-      '*': 'system',
+      // '*': 'system',
       '+.arpa': 'system',
-      '+.internal.crop.com': '10.0.0.1',
+      // '+.internal.crop.com': '10.0.0.1',
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':
-        ['tls://dns.alidns.com', 'tls://dot.pub'],
+        ['tls://dns.alidns.com', 'quic://dns.alidns.com:853', 'tls://dot.pub'],
     },
   };
 

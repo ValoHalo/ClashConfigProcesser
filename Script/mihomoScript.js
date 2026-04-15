@@ -32,6 +32,7 @@ const ruleOptionsEnable = {
   tiktok: false, // TikTok短视频平台
   netflix: false, // Netflix视频服务
   adblock: true, // 广告拦截
+  onedrive: true, // OneDrive进程，包括PC和移动端相关进程
 };
 
 /**
@@ -147,6 +148,12 @@ const ruleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.mrs',
     path: './ruleset/adblockmihomolite.mrs',
+  },
+  adblockmihomo: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs',
+    path: './ruleset/adblockmihomo.mrs',
   },
   DownloadApps: {
     ...ruleProviderCommonClassical,
@@ -390,8 +397,7 @@ const serviceConfigs = [
     name: 'YouTube',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png',
     rules: [
-      // 'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT', // 阻断 YouTube UDP 流量
-      // 使用 Youtube Revanced 客户端中的设置禁用 QUIC
+      'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT', // 阻断 YouTube UDP 流量
       'RULE-SET,youtube,YouTube',
     ],
   },
@@ -406,6 +412,19 @@ const serviceConfigs = [
     name: 'Google',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png',
     rules: ['RULE-SET,google,Google', 'RULE-SET,google_ip,Google,no-resolve'],
+  },
+    {
+    key: 'onedrive',
+    name: 'OneDrive',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/OneDrive.png',
+    rules: [
+      'PROCESS-NAME,OneDrive.exe,OneDrive',
+      'PROCESS-NAME,OneDrive.Sync.Service.exe,OneDrive',
+      'PROCESS-NAME,OneDriveStandaloneUpdater.exe,OneDrive',
+      'PROCESS-NAME,com.microsoft.skydrive,OneDrive', 
+      // OneDrive相关进程，避免被误判使OneDrive的文件同步消耗大量流量
+      // OneDrive网页访问经常不通，但是桌面和手机客户端都正常，因此只匹配进程，网页访问继续靠代理加速
+    ],
   },
   {
     key: 'github',
@@ -504,8 +523,7 @@ const serviceConfigs = [
     name: '广告拦截',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Advertising.png',
     rules: [
-      'RULE-SET,adblockmihomolite,广告拦截',
-      'GEOSITE,category-ads-all,广告拦截',
+      'RULE-SET,adblockmihomo,广告拦截', // 替换为full版本
     ],
     reject: true,
   },
@@ -649,7 +667,10 @@ function main(config) {
         svc.key === 'spotify'
       ) {
         groupProxies = ['默认节点', '直连', ...regionGroupNames];
-      } else if (svc.key === 'googlefcm') {
+      } else if (
+        svc.key === 'googlefcm' ||
+        svc.key === 'onedrive'
+      ) {
         groupProxies = ['直连', '默认节点', ...regionGroupNames];
       } else {
         groupProxies = ['默认节点', ...regionGroupNames];
@@ -748,7 +769,7 @@ function main(config) {
 
   config['dns'] = {
     enable: true,
-    ipv6: false,
+    ipv6: true,
     listen: ':1053',
     'cache-algorithm': 'arc',
     'use-hosts': true,
@@ -770,12 +791,22 @@ function main(config) {
       'rule-set:microsoft_cn',
       'rule-set:cloudflare_cn',
     ],
-    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: ['https://v.recipes/dns-cn'],
-    'proxy-server-nameserver': ['https://dns.alidns.com/dns-query#DIRECT','https://doh.pub/dns-query#DIRECT'],
+    'default-nameserver': [
+      '223.5.5.5', 
+      '119.29.29.29', 
+      '2400:3200::1', 
+      '2400:3200:baba::1',
+    ],
+    nameserver: [
+      'https://v.recipes/dns-cn',
+    ],
+    'proxy-server-nameserver': [
+      'https://dns.alidns.com/dns-query#DIRECT',
+      'https://doh.pub/dns-query#DIRECT',
+    ],
     'nameserver-policy': {
-      // '*': 'system',
       '+.arpa': 'system',
+      '+.ip6.arpa': 'system',
       'connectivitycheck.platform.hicloud.com': [...chinaDNS],
       '+.cn': [...chinaDNS],
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':

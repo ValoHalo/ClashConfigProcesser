@@ -54,6 +54,9 @@ proxies:
   - { name: '🇨🇳 直连（IPv6优先）', type: direct, ip-version: ipv6-prefer }
   - { name: '🇨🇳 直连（双栈）', type: direct }
 
+chinaDNS:
+  &chinaDNS ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query']
+
 dns:
   enable: true
   ipv6: false
@@ -63,8 +66,9 @@ dns:
   use-system-hosts: true
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
+  fake-ip-range-v6: 'fc00::/18'
   fake-ip-filter:
-    - '*'
+    - '+.cn'
     - 'rule-set:private'
     - 'rule-set:category_ntp'
     - 'rule-set:fakeip_filter'
@@ -87,9 +91,9 @@ dns:
   nameserver-policy:
     '*': 'system'
     '+.arpa': 'system'
-    '+.internal.crop.com': '10.0.0.1'
-    'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':
-      ['223.5.5.5', '119.29.29.29']
+    'connectivitycheck.platform.hicloud.com': *chinaDNS
+    '+.cn': *chinaDNS
+    'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify': *chinaDNS
 
 hosts:
   'services.googleapis.cn': ['services.googleapis.com']
@@ -141,8 +145,8 @@ rule-providers:
     url: 'https://fastly.jsdelivr.net/gh/AIsouler/MyClash@main/Rules/DownloadApps.txt'
   fakeip_filter:
     <<: *rp_domain
-    format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/fakeip-filter.mrs'
+    format: text
+    url: 'https://fastly.jsdelivr.net/gh/juewuy/ShellCrash@dev/public/fake_ip_filter.list'
   epicgames:
     <<: *rp_domain
     format: mrs
@@ -154,7 +158,7 @@ rule-providers:
   ai:
     <<: *rp_domain
     format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/ai.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs'
   youtube:
     <<: *rp_domain
     format: mrs
@@ -222,11 +226,11 @@ rule-providers:
   gfw:
     <<: *rp_domain
     format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/gfw.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/gfw.mrs'
   cn:
     <<: *rp_domain
     format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs'
+    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs'
   cn_ip:
     <<: *rp_ip
     format: mrs
@@ -463,7 +467,6 @@ rules:
   - RULE-SET,nvidia_cn,直连
   - RULE-SET,microsoft_cn,直连
   - RULE-SET,cloudflare_cn,直连
-  - DOMAIN-SUFFIX,fsend.cn,直连
 
   # 进程规则
   - RULE-SET,DownloadApps,下载专用 # 常见磁力下载软件
@@ -506,5 +509,6 @@ rules:
   # 兜底规则
   - RULE-SET,gfw,默认节点
   - RULE-SET,cn,直连
+  - DOMAIN-WILDCARD,*.cn,直连
   - RULE-SET,cn_ip,直连
   - MATCH,默认节点

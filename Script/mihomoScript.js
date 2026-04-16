@@ -33,6 +33,7 @@ const ruleOptionsEnable = {
   netflix: false, // Netflix视频服务
   adblock: true, // 广告拦截
   onedrive: true, // OneDrive进程，包括PC和移动端相关进程
+  dlsite:true, // DLsite，后续可能会拓展到其他日本平台，因为老日非常喜欢锁IP
 };
 
 /**
@@ -158,7 +159,7 @@ const ruleProviders = {
   DownloadApps: {
     ...ruleProviderCommonClassical,
     ...ruleProviderFormatText,
-    url: 'https://fastly.jsdelivr.net/gh/AIsouler/MyClash@main/Rules/DownloadApps.txt',
+    url: 'https://fastly.jsdelivr.net/gh/ValoHalo/ClashConfigProcesser@modifier/Rules/DownloadApps.txt',
     path: './ruleset/DownloadApps.txt',
   },
   fakeip_filter: {
@@ -172,6 +173,12 @@ const ruleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/epicgames.mrs',
     path: './ruleset/epicgames.mrs',
+  },
+  dlsite: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/dlsite.mrs',
+    path: './ruleset/dlsite.mrs',
   },
   nvidia_cn: {
     ...ruleProviderCommonDomain,
@@ -413,7 +420,7 @@ const serviceConfigs = [
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png',
     rules: ['RULE-SET,google,Google', 'RULE-SET,google_ip,Google,no-resolve'],
   },
-    {
+  {
     key: 'onedrive',
     name: 'OneDrive',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/OneDrive.png',
@@ -425,6 +432,12 @@ const serviceConfigs = [
       // OneDrive相关进程，避免被误判使OneDrive的文件同步消耗大量流量
       // OneDrive网页访问经常不通，但是桌面和手机客户端都正常，因此只匹配进程，网页访问继续靠代理加速
     ],
+  },
+  {
+    key: 'dlsite', // DLsite会根据用户IP匹配支付方式和隐藏部分作品，因此最好支持单独选择配置文件
+    name: 'DLsite',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure/blob/master/IconSet/Available_Alt.png', // FlC不支持图标显示，随便弄一个图标占位
+    rules: ['RULE-SET,dlsite,DLsite',],
   },
   {
     key: 'github',
@@ -762,10 +775,10 @@ function main(config) {
   };
 
   // DNS 配置
-  const chinaDNS = [
-    'https://doh.pub/dns-query',
-    'https://dns.alidns.com/dns-query',
-  ];
+  const chinaDNS = [      
+    'https://dns.alidns.com/dns-query#DIRECT',
+    'https://doh.pub/dns-query#DIRECT',
+    ];
 
   config['dns'] = {
     enable: true,
@@ -798,7 +811,7 @@ function main(config) {
       '2400:3200:baba::1',
     ],
     nameserver: [
-      'https://v.recipes/dns-cn',
+      'https://v.recipes/dns-cn', // DNS泄露检测一般会检测到这里配置的DNS
     ],
     'proxy-server-nameserver': [
       'https://dns.alidns.com/dns-query#DIRECT',
@@ -812,11 +825,18 @@ function main(config) {
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':
         [...chinaDNS],
     },
+    'direct-nameserver:': [...chinaDNS],
+    'direct-nameserver-follow-policy': true,
   };
 
   // hosts 配置
   config['hosts'] = {
+    // 解决谷歌商店无法下载的问题
     'services.googleapis.cn': ['services.googleapis.com'],
+
+    // 解决哔哩哔哩访问视频卡顿问题
+    '+.mcdn.bilivideo.com': ['0.0.0.0'],
+    '+.mcdn.bilivideo.cn': ['0.0.0.0'],
   };
 
   config['sniffer'] = {

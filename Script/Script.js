@@ -503,14 +503,11 @@ function main(config) {
   };
 
   // DNS 配置
-  const chinaDNS = [
-    'https://doh.pub/dns-query',
-    'https://dns.alidns.com/dns-query',
-  ];
+  const chinaDNS = ['system', '223.5.5.5', '119.29.29.29'];
 
   config['dns'] = {
     enable: true,
-    ipv6: false,
+    ipv6: true,
     listen: ':1053',
     'cache-algorithm': 'arc',
     'use-hosts': true,
@@ -530,22 +527,29 @@ function main(config) {
       'rule-set:nvidia_cn',
       'rule-set:microsoft_cn',
     ],
+    'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: ['1.1.1.1', '8.8.8.8'],
-    'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
     'nameserver-policy': {
       '*': 'system',
       '+.arpa': 'system',
-      'connectivitycheck.platform.hicloud.com': [...chinaDNS],
+      'connectivitycheck.platform.hicloud.com': 'system',
       '+.cn': [...chinaDNS],
       'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,microsoft_cn,microsoft,apple':
         [...chinaDNS],
     },
+    'direct-nameserver:': [...chinaDNS],
+    'direct-nameserver-follow-policy': true,
   };
 
   // hosts 配置
   config['hosts'] = {
+    // 解决谷歌商店无法下载的问题
     'services.googleapis.cn': ['services.googleapis.com'],
+
+    // 解决哔哩哔哩访问视频卡顿问题
+    '+.mcdn.bilivideo.com': ['0.0.0.0'],
+    '+.mcdn.bilivideo.cn': ['0.0.0.0'],
   };
 
   config['sniffer'] = {

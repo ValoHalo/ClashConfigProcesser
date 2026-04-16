@@ -159,7 +159,7 @@ const ruleProviders = {
   DownloadApps: {
     ...ruleProviderCommonClassical,
     ...ruleProviderFormatText,
-    url: 'https://fastly.jsdelivr.net/gh/ValoHalo/ClashConfigProcesser@modifier/Rules/DownloadApps.txt',
+    url: 'https://fastly.jsdelivr.net/gh/ValoHalo/ClashConfigProcesser@modified/Rules/DownloadApps.txt',
     path: './ruleset/DownloadApps.txt',
   },
   fakeip_filter: {
@@ -783,7 +783,7 @@ function main(config) {
   config['dns'] = {
     enable: true,
     ipv6: true,
-    listen: ':1053',
+    listen: ':10053',
     'cache-algorithm': 'arc',
     'use-hosts': true,
     'use-system-hosts': true,

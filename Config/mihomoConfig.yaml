@@ -63,8 +63,8 @@ chinaDNS:
   ]
 foreignDNS:
   &foreignDNS [
-    'https://1.1.1.1/dns-query#默认节点',
-    'https://8.8.8.8/dns-query#默认节点',
+    'https://1.1.1.1/dns-query#默认代理',
+    'https://8.8.8.8/dns-query#默认代理',
   ]
 
 dns:
@@ -332,17 +332,17 @@ group_common_auto:
 # 通用代理节点组
 prox_common:
   &proxies {
-    proxies: ['默认节点', '香港', '日本', '美国', '新加坡', '其他节点'],
+    proxies: ['默认代理', '香港', '日本', '美国', '新加坡', '其他节点'],
   }
 
 proxy-groups:
-  - name: '默认节点'
+  - name: '默认代理'
     <<: *group_common_select
     proxies: ['香港', '日本', '美国', '新加坡', '其他节点']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png'
 
   # 分流策略组
-  - name: '国外AI'
+  - name: 'AI'
     <<: [*group_common_select, *proxies]
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png'
 
@@ -352,7 +352,7 @@ proxy-groups:
 
   - name: 'FCM'
     <<: *group_common_select
-    proxies: ['直连', '默认节点', '香港', '日本', '美国', '新加坡', '其他节点']
+    proxies: ['直连', '默认代理', '香港', '日本', '美国', '新加坡', '其他节点']
     icon: 'https://fastly.jsdelivr.net/gh/MiToverG422/Qure@master/IconSet/Color/fcm.png'
 
   - name: 'Google'
@@ -365,12 +365,12 @@ proxy-groups:
 
   - name: 'Microsoft'
     <<: *group_common_select
-    proxies: ['默认节点', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
+    proxies: ['默认代理', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png'
 
   - name: 'Apple'
     <<: *group_common_select
-    proxies: ['默认节点', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
+    proxies: ['默认代理', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png'
 
   - name: 'Telegram'
@@ -399,7 +399,7 @@ proxy-groups:
 
   - name: 'Spotify'
     <<: *group_common_select
-    proxies: ['默认节点', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
+    proxies: ['默认代理', '直连', '香港', '日本', '美国', '新加坡', '其他节点']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Spotify.png'
 
   - name: 'TikTok'
@@ -417,7 +417,7 @@ proxy-groups:
 
   - name: '下载专用'
     <<: *group_common_select
-    proxies: ['直连', '默认节点']
+    proxies: ['直连', '默认代理']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png'
 
   - name: '直连'
@@ -498,7 +498,7 @@ rules:
   - AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT
 
   # 代理规则（域名）
-  - RULE-SET,ai,国外AI
+  - RULE-SET,ai,AI
   - RULE-SET,youtube,YouTube
   - RULE-SET,googlefcm,FCM
   - RULE-SET,google,Google
@@ -525,8 +525,8 @@ rules:
   - RULE-SET,netflix_ip,Netflix,no-resolve
 
   # 兜底规则
-  - RULE-SET,gfw,默认节点
+  - RULE-SET,gfw,默认代理
   - RULE-SET,cn,直连
   - DOMAIN-WILDCARD,*.cn,直连
   - RULE-SET,cn_ip,直连
-  - MATCH,默认节点
+  - MATCH,默认代理

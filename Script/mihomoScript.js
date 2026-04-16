@@ -15,7 +15,7 @@ const enable = true;
  * false = 禁用
  */
 const ruleOptionsEnable = {
-  ai: true, // 国外AI
+  ai: true, // 国外AI服务
   youtube: true, // YouTube
   googlefcm: true, // FCM服务
   google: true, // Google服务
@@ -381,9 +381,9 @@ const groupBaseOption = {
 const serviceConfigs = [
   {
     key: 'ai',
-    name: '国外AI',
+    name: 'AI',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
-    rules: ['RULE-SET,ai,国外AI'],
+    rules: ['RULE-SET,ai,AI'],
   },
   {
     key: 'youtube',
@@ -626,7 +626,7 @@ function main(config) {
 
   functionalGroups.push({
     ...groupBaseOption,
-    name: '默认节点',
+    name: '默认代理',
     type: 'select',
     proxies: [...regionGroupNames],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
@@ -644,11 +644,11 @@ function main(config) {
         svc.key === 'apple' ||
         svc.key === 'spotify'
       ) {
-        groupProxies = ['默认节点', '直连', ...regionGroupNames];
+        groupProxies = ['默认代理', '直连', ...regionGroupNames];
       } else if (svc.key === 'googlefcm') {
-        groupProxies = ['直连', '默认节点', ...regionGroupNames];
+        groupProxies = ['直连', '默认代理', ...regionGroupNames];
       } else {
-        groupProxies = ['默认节点', ...regionGroupNames];
+        groupProxies = ['默认代理', ...regionGroupNames];
       }
 
       functionalGroups.push({
@@ -667,7 +667,7 @@ function main(config) {
       ...groupBaseOption,
       name: '下载专用',
       type: 'select',
-      proxies: ['直连', '默认节点'],
+      proxies: ['直连', '默认代理'],
       icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png',
     },
     {
@@ -710,11 +710,11 @@ function main(config) {
     ...rules,
 
     // 兜底规则
-    'RULE-SET,gfw,默认节点',
+    'RULE-SET,gfw,默认代理',
     'RULE-SET,cn,直连',
     'DOMAIN-WILDCARD,*.cn,直连',
     'RULE-SET,cn_ip,直连',
-    'MATCH,默认节点',
+    'MATCH,默认代理',
   ];
 
   config['allow-lan'] = true;
@@ -743,8 +743,8 @@ function main(config) {
     'https://doh.pub/dns-query',
   ];
   const foreignDNS = [
-    'https://1.1.1.1/dns-query#默认节点',
-    'https://8.8.8.8/dns-query#默认节点',
+    'https://1.1.1.1/dns-query#默认代理',
+    'https://8.8.8.8/dns-query#默认代理',
   ];
 
   // 直连规则集列表

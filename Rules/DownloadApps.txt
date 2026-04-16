@@ -31,3 +31,4 @@ PROCESS-NAME,WebTorrentHelper
 PROCESS-NAME,WebTorrentHelper.exe
 PROCESS-NAME,Weiyun
 PROCESS-NAME,Weiyun.exe
+PROCESS-NAME,Resilio Sync.exe

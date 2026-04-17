@@ -450,11 +450,7 @@ function main(config) {
       ...groupBaseOption,
       name: '直连',
       type: 'select',
-      proxies: [
-        '🇨🇳 直连（IPv4优先）',
-        '🇨🇳 直连（IPv6优先）',
-        '🇨🇳 直连（双栈）',
-      ],
+      proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈'],
       url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
       icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
     },
@@ -464,17 +460,17 @@ function main(config) {
 
   config.proxies.push(
     {
-      name: '🇨🇳 直连（IPv4优先）',
+      name: '🇨🇳 直连 | IPv4优先',
       type: 'direct',
       'ip-version': 'ipv4-prefer',
     },
     {
-      name: '🇨🇳 直连（IPv6优先）',
+      name: '🇨🇳 直连 | IPv6优先',
       type: 'direct',
       'ip-version': 'ipv6-prefer',
     },
     {
-      name: '🇨🇳 直连（双栈）',
+      name: '🇨🇳 直连 | 双栈',
       type: 'direct',
     },
   );

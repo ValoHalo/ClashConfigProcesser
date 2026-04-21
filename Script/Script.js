@@ -1,10 +1,10 @@
-// --- 1. 静态配置区域 ---
+// --- 静态配置区域 ---
 
 // 定义全局排除节点的正则表达式
 const excludeFilter =
   /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|超时|收藏|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|⚠️|@|Expire|http|com/u;
 
-// 定义节点组
+// 定义地区策略组
 const regionDefinitions = [
   {
     name: '香港',
@@ -146,12 +146,6 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/telegram_ip.mrs',
     path: './ruleset/telegram_ip.mrs',
   },
-  pixiv: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/pixiv.mrs',
-    path: './ruleset/pixiv.mrs',
-  },
   steam: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -206,12 +200,6 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cn.mrs',
     path: './ruleset/cn_ip.mrs',
   },
-  apple: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple.mrs',
-    path: './ruleset/apple.mrs',
-  },
   connectivity_check: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -226,33 +214,22 @@ const ruleProviders = {
   },
 };
 
-// --- 2. 功能策略组数据结构 ---
-
 // 策略组通用配置
 const groupBaseOption = {
   interval: 600,
   timeout: 3000,
   url: 'https://g.cn/generate_204',
-  lazy: false,
+  lazy: true,
   'max-failed-times': 3,
   hidden: false,
 };
 
+// 定义分流策略组
 const serviceConfigs = [
   {
     key: 'ai',
-    name: '国外AI',
+    name: 'AI',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
-  },
-  {
-    key: 'youtube',
-    name: 'YouTube',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png',
-  },
-  {
-    key: 'google',
-    name: 'Google',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png',
   },
   {
     key: 'github',
@@ -260,34 +237,14 @@ const serviceConfigs = [
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png',
   },
   {
-    key: 'microsoft',
-    name: 'Microsoft',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png',
-  },
-  {
-    key: 'apple',
-    name: 'Apple',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png',
-  },
-  {
     key: 'telegram',
     name: 'Telegram',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png',
   },
   {
-    key: 'pixiv',
-    name: 'Pixiv',
-    icon: 'https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w480-h960-rw',
-  },
-  {
     key: 'steam',
     name: 'Steam',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Steam.png',
-  },
-  {
-    key: 'twitter',
-    name: 'Twitter',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Twitter.png',
   },
   {
     key: 'adblock',
@@ -297,7 +254,7 @@ const serviceConfigs = [
   },
 ];
 
-// --- 3. 主入口 ---
+// --- 主入口 ---
 
 function main(config) {
   // 排除匹配到的节点
@@ -307,6 +264,7 @@ function main(config) {
     );
   }
 
+  // 获取节点列表
   const proxies = config?.proxies || [];
   const proxyCount = proxies.length;
   const proxyProviderCount =
@@ -318,7 +276,7 @@ function main(config) {
     throw new Error('配置文件中未找到任何代理');
   }
 
-  // 高效代理分类 (单次遍历)
+  // 节点分类
   const regionGroups = {};
   regionDefinitions.forEach(
     (r) =>
@@ -328,11 +286,11 @@ function main(config) {
       }),
   );
 
-  // 节点组分类
   const lowGroup = regionGroups['低倍率节点'];
   const highGroup = regionGroups['高倍率节点'];
   const otherProxies = [];
 
+  // 节点分类（倍率）
   for (const proxy of proxies) {
     const name = proxy.name;
     if (
@@ -347,6 +305,7 @@ function main(config) {
       highGroup.proxies.push(name);
     }
 
+    // 节点分类（地区）
     let matched = false;
     for (const region of regionDefinitions) {
       if (region.name === '低倍率节点' || region.name === '高倍率节点')
@@ -403,18 +362,18 @@ function main(config) {
     });
   }
 
-  const regionGroupNames = generatedRegionGroups
+  // 筛选类型为 select 的策略组
+  const groupNamesOfSelect = generatedRegionGroups
     .filter((g) => g.type === 'select')
     .map((g) => g.name);
 
-  // 构建功能策略组
+  // 构建分流策略组
   const functionalGroups = [];
-
   functionalGroups.push({
     ...groupBaseOption,
-    name: '默认节点',
+    name: '代理',
     type: 'select',
-    proxies: [...regionGroupNames],
+    proxies: [...groupNamesOfSelect],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
   });
 
@@ -422,10 +381,8 @@ function main(config) {
     let groupProxies;
     if (svc.reject) {
       groupProxies = ['REJECT', 'REJECT-DROP', 'PASS'];
-    } else if (svc.key === 'microsoft' || svc.key === 'apple') {
-      groupProxies = ['默认节点', '直连', ...regionGroupNames];
     } else {
-      groupProxies = ['默认节点', ...regionGroupNames];
+      groupProxies = ['代理', ...groupNamesOfSelect];
     }
 
     functionalGroups.push({
@@ -438,49 +395,52 @@ function main(config) {
   });
 
   // 添加其他策略组
-  functionalGroups.push(
-    {
-      ...groupBaseOption,
-      name: '下载专用',
-      type: 'select',
-      proxies: ['直连', '默认节点'],
-      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png',
-    },
-    {
-      ...groupBaseOption,
-      name: '直连',
-      type: 'select',
-      proxies: [
-        '🇨🇳 直连（IPv4优先）',
-        '🇨🇳 直连（IPv6优先）',
-        '🇨🇳 直连（双栈）',
-      ],
-      url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
-      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
-    },
-  );
+  functionalGroups.push({
+    ...groupBaseOption,
+    name: '直连',
+    type: 'select',
+    proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈'],
+    url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
+  });
 
-  // --- 4. 覆盖基础配置 ---
+  // 构建 GLOBAL 全局策略组
+  const allGroupNames = [
+    ...functionalGroups.map((g) => g.name),
+    ...generatedRegionGroups.map((g) => g.name),
+  ];
+  const globalGroup = {
+    ...groupBaseOption,
+    name: 'GLOBAL',
+    type: 'select',
+    proxies: allGroupNames,
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
+  };
+
+  // --- 覆盖基础配置 ---
 
   config.proxies.push(
     {
-      name: '🇨🇳 直连（IPv4优先）',
+      name: '🇨🇳 直连 | IPv4优先',
       type: 'direct',
       'ip-version': 'ipv4-prefer',
     },
     {
-      name: '🇨🇳 直连（IPv6优先）',
+      name: '🇨🇳 直连 | IPv6优先',
       type: 'direct',
       'ip-version': 'ipv6-prefer',
     },
     {
-      name: '🇨🇳 直连（双栈）',
+      name: '🇨🇳 直连 | 双栈',
       type: 'direct',
     },
   );
 
-  // 组装最终结果
-  config['proxy-groups'] = [...functionalGroups, ...generatedRegionGroups];
+  config['proxy-groups'] = [
+    globalGroup,
+    ...functionalGroups,
+    ...generatedRegionGroups,
+  ];
   config['rule-providers'] = ruleProviders;
 
   config['allow-lan'] = true;
@@ -502,8 +462,26 @@ function main(config) {
     'store-fake-ip': true,
   };
 
-  // DNS 配置
-  const chinaDNS = ['system', '223.5.5.5', '119.29.29.29'];
+  // 国内外 DNS 定义
+  const chinaDNS = [
+    'system',
+    'https://dns.alidns.com/dns-query',
+    'https://doh.pub/dns-query',
+  ];
+  const foreignDNS = [
+    'https://1.1.1.1/dns-query#代理',
+    'https://8.8.8.8/dns-query#代理',
+  ];
+
+  // 直连规则集列表
+  const direct_rules = [
+    'private',
+    'cn',
+    'steam_cn',
+    'epicgames',
+    'nvidia_cn',
+    'microsoft_cn',
+  ];
 
   config['dns'] = {
     enable: true,
@@ -517,43 +495,41 @@ function main(config) {
     'fake-ip-range-v6': 'fc00::/18',
     'fake-ip-filter': [
       '+.cn',
-      'rule-set:private',
       'rule-set:category_ntp',
       'rule-set:fakeip_filter',
       'rule-set:connectivity_check',
-      'rule-set:cn',
-      'rule-set:steam_cn',
-      'rule-set:epicgames',
-      'rule-set:nvidia_cn',
-      'rule-set:microsoft_cn',
+      ...direct_rules.map((rule) => `rule-set:${rule}`),
     ],
-    'proxy-server-nameserver': ['https://doh.pub/dns-query#DIRECT'],
+    'proxy-server-nameserver': [
+      'https://doh.pub/dns-query#DIRECT',
+      'https://dns.alidns.com/dns-query#DIRECT',
+    ],
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: ['1.1.1.1', '8.8.8.8'],
+    nameserver: [...foreignDNS],
     'nameserver-policy': {
       '*': 'system',
       '+.arpa': 'system',
-      'connectivitycheck.platform.hicloud.com': 'system',
       '+.cn': [...chinaDNS],
-      'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,microsoft_cn,microsoft,apple':
-        [...chinaDNS],
+      [`rule-set:${[...direct_rules].join(',')}`]: [...chinaDNS],
     },
-    'direct-nameserver:': [...chinaDNS],
+    'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
     'direct-nameserver-follow-policy': true,
   };
 
-  // hosts 配置
   config['hosts'] = {
+    'dns.alidns.com': ['223.5.5.5', '223.6.6.6'],
+    'doh.pub': ['1.12.12.12', '120.53.53.53'],
+
     // 解决谷歌商店无法下载的问题
     'services.googleapis.cn': ['services.googleapis.com'],
 
-    // 解决哔哩哔哩访问视频卡顿问题
+    // 屏蔽哔哩哔哩PCDN，解决访问视频卡顿问题
     '+.mcdn.bilivideo.com': ['0.0.0.0'],
     '+.mcdn.bilivideo.cn': ['0.0.0.0'],
   };
 
   config['sniffer'] = {
-    enable: true,
+    enable: false,
     'force-dns-mapping': true,
     'parse-pure-ip': true,
     'override-destination': false,
@@ -595,9 +571,6 @@ function main(config) {
   };
 
   config['rules'] = [
-    // 阻断 YouTube UDP 流量
-    'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT',
-
     // 私有网络直连
     'RULE-SET,private,直连',
     'RULE-SET,private_ip,直连,no-resolve',
@@ -609,36 +582,32 @@ function main(config) {
     'RULE-SET,microsoft_cn,直连',
 
     // 进程规则
-    'PROCESS-NAME,com.perol.pixez,Pixiv', // Pixez
-    'PROCESS-NAME,com.perol.play.pixez,Pixiv', // Pixez Google Play 版
-    'RULE-SET,DownloadApps,下载专用', // 常见磁力下载软件
+    'RULE-SET,DownloadApps,直连', // 常见磁力下载软件
 
     // 广告拦截
     'RULE-SET,adblockmihomolite,广告拦截',
 
     // 代理规则（域名）
-    'RULE-SET,ai,国外AI',
-    'RULE-SET,youtube,YouTube',
-    'RULE-SET,google,Google',
+    'RULE-SET,ai,AI',
+    'RULE-SET,youtube,代理',
+    'RULE-SET,google,代理',
     'RULE-SET,github,GitHub',
-    'RULE-SET,microsoft,Microsoft',
-    'RULE-SET,apple,Apple',
+    'RULE-SET,microsoft,代理',
     'RULE-SET,telegram,Telegram',
-    'RULE-SET,pixiv,Pixiv',
     'RULE-SET,steam,Steam',
-    'RULE-SET,twitter,Twitter',
+    'RULE-SET,twitter,代理',
 
     // 代理规则（IP）
-    'RULE-SET,google_ip,Google,no-resolve',
+    'RULE-SET,google_ip,代理,no-resolve',
     'RULE-SET,telegram_ip,Telegram,no-resolve',
-    'RULE-SET,twitter_ip,Twitter,no-resolve',
+    'RULE-SET,twitter_ip,代理,no-resolve',
 
     // 兜底规则
-    'RULE-SET,gfw,默认节点',
+    'RULE-SET,gfw,代理',
     'RULE-SET,cn,直连',
     'DOMAIN-WILDCARD,*.cn,直连',
     'RULE-SET,cn_ip,直连',
-    'MATCH,默认节点',
+    'MATCH,代理',
   ];
 
   return config;

@@ -1,4 +1,4 @@
-// --- 1. 静态配置区域 ---
+// --- 静态配置区域 ---
 
 // 脚本链接：https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/mihomoScript.js
 
@@ -15,7 +15,8 @@ const enable = true;
  * false = 禁用
  */
 const ruleOptionsEnable = {
-  ai: true, // 国外AI
+  captcha: true, // 人机验证，建议选择高质量节点，提高一次通过的概率
+  ai: true, // 国外AI服务
   youtube: true, // YouTube
   googlefcm: true, // FCM服务
   google: true, // Google服务
@@ -24,6 +25,7 @@ const ruleOptionsEnable = {
   apple: true, // Apple服务
   telegram: true, // Telegram通讯软件
   twitter: true, // Twitter社交平台
+  instagram: true, // Instagram社交平台
   steam: true, // Steam游戏平台
   cloudflare: true, // Cloudflare服务
   pixiv: true, // Pixiv绘画网站
@@ -33,7 +35,7 @@ const ruleOptionsEnable = {
   netflix: false, // Netflix视频服务
   adblock: true, // 广告拦截
   onedrive: true, // OneDrive进程，包括PC和移动端相关进程
-  dlsite:true, // DLsite，后续可能会拓展到其他日本平台，因为老日非常喜欢锁IP
+  dlsite: true, // DLsite，后续可能会拓展到其他日本平台，因为老日非常喜欢锁IP
 };
 
 /**
@@ -81,7 +83,7 @@ const rules = [
   'RULE-SET,cloudflare_cn,直连',
 ];
 
-// 定义节点组
+// 定义地区策略组
 const regionDefinitions = [
   {
     name: '香港',
@@ -378,26 +380,44 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ntp.mrs',
     path: './ruleset/category-ntp.mrs',
   },
+  captcha: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/captcha_domain.mrs',
+    path: './ruleset/captcha.mrs',
+  },
+  instagram: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/instagram.mrs',
+    path: './ruleset/instagram.mrs',
+  },
 };
-
-// --- 2. 功能策略组数据结构 ---
 
 // 策略组通用配置
 const groupBaseOption = {
   interval: 600,
   timeout: 3000,
   url: 'https://g.cn/generate_204',
-  lazy: false,
+  lazy: true,
   'max-failed-times': 3,
   hidden: false,
 };
 
+// 定义分流策略组和对应的规则
 const serviceConfigs = [
   {
+    key: 'captcha',
+    name: '人机验证',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Bot.png',
+    rules: ['RULE-SET,captcha,人机验证'],
+    direct: true,
+  },
+  {
     key: 'ai',
-    name: '国外AI',
+    name: 'AI',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
-    rules: ['RULE-SET,ai,国外AI'],
+    rules: ['RULE-SET,ai,AI'],
   },
   {
     key: 'youtube',
@@ -450,12 +470,14 @@ const serviceConfigs = [
     name: 'Microsoft',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png',
     rules: ['RULE-SET,microsoft,Microsoft'],
+    direct: true,
   },
   {
     key: 'apple',
     name: 'Apple',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png',
     rules: ['RULE-SET,apple,Apple'],
+    direct: true,
   },
   {
     key: 'telegram',
@@ -501,6 +523,12 @@ const serviceConfigs = [
     ],
   },
   {
+    key: 'instagram',
+    name: 'Instagram',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Instagram.png',
+    rules: ['RULE-SET,instagram,Instagram'],
+  },
+  {
     key: 'emby',
     name: 'Emby',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Emby.png',
@@ -515,6 +543,7 @@ const serviceConfigs = [
     name: 'Spotify',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Spotify.png',
     rules: ['RULE-SET,spotify,Spotify'],
+    direct: true,
   },
   {
     key: 'tiktok',
@@ -542,7 +571,7 @@ const serviceConfigs = [
   },
 ];
 
-// --- 3. 主入口 ---
+// --- 主入口 ---
 
 function main(config) {
   if (!enable) return config;
@@ -554,6 +583,7 @@ function main(config) {
     );
   }
 
+  // 获取节点列表
   const proxies = config?.proxies || [];
   const proxyCount = proxies.length;
   const proxyProviderCount =
@@ -565,7 +595,7 @@ function main(config) {
     throw new Error('配置文件中未找到任何代理');
   }
 
-  // 高效代理分类 (单次遍历)
+  // 节点分类
   const regionGroups = {};
   regionDefinitions.forEach(
     (r) =>
@@ -575,11 +605,11 @@ function main(config) {
     }),
   );
 
-  // 节点组分类
   const lowGroup = regionGroups['低倍率节点'];
   const highGroup = regionGroups['高倍率节点'];
   const otherProxies = [];
 
+  // 节点分类（倍率）
   for (const proxy of proxies) {
     const name = proxy.name;
     if (
@@ -596,6 +626,7 @@ function main(config) {
       highGroup.proxies.push(name);
     }
 
+    // 节点分类（地区）
     let matched = false;
     for (const region of regionDefinitions) {
       if (region.name === '低倍率节点' || region.name === '高倍率节点')
@@ -652,18 +683,18 @@ function main(config) {
     });
   }
 
-  const regionGroupNames = generatedRegionGroups
+  // 筛选类型为 select 的策略组
+  const groupNamesOfSelect = generatedRegionGroups
     .filter((g) => g.type === 'select')
     .map((g) => g.name);
 
-  // 构建功能策略组
+  // 构建分流策略组
   const functionalGroups = [];
-
   functionalGroups.push({
     ...groupBaseOption,
-    name: '默认节点',
+    name: '默认代理',
     type: 'select',
-    proxies: [...regionGroupNames],
+    proxies: [...groupNamesOfSelect],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
   });
 
@@ -674,19 +705,15 @@ function main(config) {
       let groupProxies;
       if (svc.reject) {
         groupProxies = ['REJECT', 'REJECT-DROP', 'PASS'];
-      } else if (
-        svc.key === 'microsoft' ||
-        svc.key === 'apple' ||
-        svc.key === 'spotify'
-      ) {
-        groupProxies = ['默认节点', '直连', ...regionGroupNames];
+      } else if (svc.direct) {
+        groupProxies = ['默认代理', '直连', ...groupNamesOfSelect];
       } else if (
         svc.key === 'googlefcm' ||
         svc.key === 'onedrive'
       ) {
-        groupProxies = ['直连', '默认节点', ...regionGroupNames];
+        groupProxies = ['直连', '默认代理', ...groupNamesOfSelect];
       } else {
-        groupProxies = ['默认节点', ...regionGroupNames];
+        groupProxies = ['默认代理', ...groupNamesOfSelect];
       }
 
       functionalGroups.push({
@@ -705,57 +732,68 @@ function main(config) {
       ...groupBaseOption,
       name: '下载专用',
       type: 'select',
-      proxies: ['直连', '默认节点'],
+      proxies: ['直连', '默认代理'],
       icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png',
     },
     {
       ...groupBaseOption,
       name: '直连',
       type: 'select',
-      proxies: [
-        '🇨🇳 直连（IPv4优先）',
-        '🇨🇳 直连（IPv6优先）',
-        '🇨🇳 直连（双栈）',
-      ],
+      proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈'],
       url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
       icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
     },
   );
 
-  // --- 4. 覆盖基础配置 ---
+  // 构建 GLOBAL 全局策略组
+  const allGroupNames = [
+    ...functionalGroups.map((g) => g.name),
+    ...generatedRegionGroups.map((g) => g.name),
+  ];
+  const globalGroup = {
+    ...groupBaseOption,
+    name: 'GLOBAL',
+    type: 'select',
+    proxies: allGroupNames,
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
+  };
+
+  // --- 覆盖基础配置 ---
 
   config.proxies.push(
     {
-      name: '🇨🇳 直连（IPv4优先）',
+      name: '🇨🇳 直连 | IPv4优先',
       type: 'direct',
       'ip-version': 'ipv4-prefer',
     },
     {
-      name: '🇨🇳 直连（IPv6优先）',
+      name: '🇨🇳 直连 | IPv6优先',
       type: 'direct',
       'ip-version': 'ipv6-prefer',
     },
     {
-      name: '🇨🇳 直连（双栈）',
+      name: '🇨🇳 直连 | 双栈',
       type: 'direct',
     },
   );
 
-  // 组装最终结果
-  config['proxy-groups'] = [...functionalGroups, ...generatedRegionGroups];
+  config['proxy-groups'] = [
+    globalGroup,
+    ...functionalGroups,
+    ...generatedRegionGroups,
+  ];
   config['rule-providers'] = ruleProviders;
   config['rules'] = [
     ...rules,
 
     // 兜底规则
-    'RULE-SET,gfw,默认节点',
+    'RULE-SET,gfw,默认代理',
     'RULE-SET,cn,直连',
     'DOMAIN-WILDCARD,*.cn,直连',
     'RULE-SET,cn_ip,直连',
-    'MATCH,默认节点',
+    'MATCH,默认代理',
   ];
 
-  // config['allow-lan'] = true;
   config['ipv6'] = true;
   config['bind-address'] = '*';
   config['unified-delay'] = true;
@@ -764,21 +802,34 @@ function main(config) {
   config['keep-alive-interval'] = 60;
   config['find-process-mode'] = 'strict';
 
-  // config['external-controller'] = '[::]:9090';
-  // config['external-ui'] = 'ui';
-  // config['external-ui-url'] =
-  //   'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
-
   config['profile'] = {
     'store-selected': true,
     'store-fake-ip': true,
   };
 
-  // DNS 配置
-  const chinaDNS = [      
-    'https://dns.alidns.com/dns-query#DIRECT',
-    'https://doh.pub/dns-query#DIRECT',
-    ];
+  // 国内外 DNS 定义
+  const chinaDNS = [
+    'https://dns.alidns.com/dns-query',
+    'https://doh.pub/dns-query',
+  ];
+  const foreignDNS = [
+    'https://v.recipes/dns-cn#DIRECT',
+    'https://v.recipes/dns-ech#DIRECT',
+    'https://1.1.1.1/dns-query#默认代理',
+    'https://8.8.8.8/dns-query#默认代理',
+  ];
+
+  // 直连规则集列表
+  const direct_rules = [
+    'private',
+    'cn',
+    'googlefcm',
+    'steam_cn',
+    'epicgames',
+    'nvidia_cn',
+    'microsoft_cn',
+    'cloudflare_cn',
+  ];
 
   config['dns'] = {
     enable: true,
@@ -792,17 +843,14 @@ function main(config) {
     'fake-ip-range-v6': 'fc00::/18',
     'fake-ip-filter': [
       '+.cn',
-      'rule-set:private',
       'rule-set:category_ntp',
       'rule-set:fakeip_filter',
       'rule-set:connectivity_check',
-      'rule-set:cn',
-      'rule-set:googlefcm',
-      'rule-set:steam_cn',
-      'rule-set:epicgames',
-      'rule-set:nvidia_cn',
-      'rule-set:microsoft_cn',
-      'rule-set:cloudflare_cn',
+      ...direct_rules.map((rule) => `rule-set:${rule}`),
+    ],
+    'proxy-server-nameserver': [
+      'https://doh.pub/dns-query#DIRECT',
+      'https://dns.alidns.com/dns-query#DIRECT',
     ],
     'default-nameserver': [
       '223.5.5.5', 
@@ -810,9 +858,7 @@ function main(config) {
       '2400:3200::1', 
       '2400:3200:baba::1',
     ],
-    nameserver: [
-      'https://v.recipes/dns-cn', // DNS泄露检测一般会检测到这里配置的DNS
-    ],
+    nameserver: [...foreignDNS],
     'proxy-server-nameserver': [
       'https://dns.alidns.com/dns-query#DIRECT',
       'https://doh.pub/dns-query#DIRECT',
@@ -820,27 +866,28 @@ function main(config) {
     'nameserver-policy': {
       '+.arpa': 'system',
       '+.ip6.arpa': 'system',
-      'connectivitycheck.platform.hicloud.com': [...chinaDNS],
       '+.cn': [...chinaDNS],
-      'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify':
+      [`rule-set:${[...direct_rules, 'microsoft', 'apple', 'spotify', 'captcha'].join(',')}`]:
         [...chinaDNS],
     },
-    'direct-nameserver:': [...chinaDNS],
+    'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
     'direct-nameserver-follow-policy': true,
   };
 
-  // hosts 配置
   config['hosts'] = {
+    'dns.alidns.com': ['223.5.5.5', '223.6.6.6'],
+    'doh.pub': ['1.12.12.12', '120.53.53.53'],
+
     // 解决谷歌商店无法下载的问题
     'services.googleapis.cn': ['services.googleapis.com'],
 
-    // 解决哔哩哔哩访问视频卡顿问题
+    // 屏蔽哔哩哔哩PCDN，解决访问视频卡顿问题
     '+.mcdn.bilivideo.com': ['0.0.0.0'],
     '+.mcdn.bilivideo.cn': ['0.0.0.0'],
   };
 
   config['sniffer'] = {
-    enable: true,
+    enable: false,
     'force-dns-mapping': true,
     'parse-pure-ip': true,
     'override-destination': false,

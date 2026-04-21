@@ -43,8 +43,9 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 > - _若不需要某个策略组，可在脚本中将对应开关设为 `false`_
 
-- `默认节点`
-- `国外AI`
+- `默认代理`
+- `人机验证`
+- `AI`
 - `YouTube`
 - `FCM`
 - `Google`
@@ -56,6 +57,7 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 - `Pixiv`
 - `Steam`
 - `Twitter`
+- `Instagram`
 - `Emby`
 - `Spotify`
 - `TikTok`

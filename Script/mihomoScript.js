@@ -1,6 +1,6 @@
 // --- 静态配置区域 ---
 
-// 脚本链接：https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/mihomoScript.js
+// 脚本链接：https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modified/Script/mihomoScript.js
 
 /**
  * 整个脚本的总开关
@@ -25,7 +25,7 @@ const ruleOptionsEnable = {
   apple: true, // Apple服务
   telegram: true, // Telegram通讯软件
   twitter: true, // Twitter社交平台
-  instagram: true, // Instagram社交平台
+  instagram: false, // Instagram社交平台
   steam: true, // Steam游戏平台
   cloudflare: true, // Cloudflare服务
   pixiv: true, // Pixiv绘画网站

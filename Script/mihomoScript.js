@@ -814,7 +814,7 @@ function main(config) {
   ];
   const foreignDNS = [
     'https://v.recipes/dns-cn#DIRECT',
-    'https://v.recipes/dns-ech#DIRECT',
+    'https://v.recipes/dns-ecs#DIRECT',
     'https://1.1.1.1/dns-query#默认代理',
     'https://8.8.8.8/dns-query#默认代理',
   ];

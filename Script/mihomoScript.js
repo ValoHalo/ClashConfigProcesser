@@ -15,7 +15,6 @@ const enable = true;
  * false = 禁用
  */
 const ruleOptionsEnable = {
-  captcha: true, // 人机验证，建议选择高质量节点，提高一次通过的概率
   ai: true, // 国外AI服务
   youtube: true, // YouTube
   googlefcm: true, // FCM服务
@@ -73,14 +72,15 @@ const rules = [
   'RULE-SET,private_ip,直连,no-resolve',
 
   // 进程规则
-  'RULE-SET,DownloadApps,下载专用', // 常见磁力下载软件
+  'RULE-SET,DownloadApps,直连', // 常见磁力下载软件
 
   // 国内直连
-  'RULE-SET,steam_cn,直连',
+  'RULE-SET,games_cn,直连',
   'RULE-SET,epicgames,直连',
   'RULE-SET,nvidia_cn,直连',
   'RULE-SET,microsoft_cn,直连',
   'RULE-SET,cloudflare_cn,直连',
+  'DOMAIN,fsend.cn,直连',
 ];
 
 // 定义地区策略组
@@ -166,9 +166,9 @@ const ruleProviders = {
   },
   fakeip_filter: {
     ...ruleProviderCommonDomain,
-    ...ruleProviderFormatText,
-    url: 'https://fastly.jsdelivr.net/gh/juewuy/ShellCrash@dev/public/fake_ip_filter.list',
-    path: './ruleset/fakeip-filter.list',
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs',
+    path: './ruleset/fakeip-filter.mrs',
   },
   epicgames: {
     ...ruleProviderCommonDomain,
@@ -245,7 +245,7 @@ const ruleProviders = {
   telegram_ip: {
     ...ruleProviderCommonIpcidr,
     ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/telegram_ip.mrs',
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs',
     path: './ruleset/telegram_ip.mrs',
   },
   pixiv: {
@@ -260,11 +260,11 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs',
     path: './ruleset/steam.mrs',
   },
-  steam_cn: {
+  games_cn: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs',
-    path: './ruleset/steam@cn.mrs',
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-games@cn.mrs',
+    path: './ruleset/category-games@cn.mrs',
   },
   twitter: {
     ...ruleProviderCommonDomain,
@@ -296,10 +296,16 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/gfw.mrs',
     path: './ruleset/gfw.mrs',
   },
+  geolocation_cn: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-cn.mrs',
+    path: './ruleset/geolocation-cn.mrs',
+  },
   cn: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
-    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs',
+    url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/direct.mrs',
     path: './ruleset/cn.mrs',
   },
   cn_ip: {
@@ -380,12 +386,6 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ntp.mrs',
     path: './ruleset/category-ntp.mrs',
   },
-  captcha: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/captcha_domain.mrs',
-    path: './ruleset/captcha.mrs',
-  },
   instagram: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -394,8 +394,9 @@ const ruleProviders = {
   },
 };
 
-// 策略组通用配置
-const groupBaseOption = {
+// select策略组通用配置
+const selectBaseOption = {
+  type: 'select',
   interval: 600,
   timeout: 3000,
   url: 'https://g.cn/generate_204',
@@ -404,15 +405,21 @@ const groupBaseOption = {
   hidden: false,
 };
 
+// url-test策略组通用配置
+const urlTestBaseOption = {
+  type: 'url-test',
+  interval: 600,
+  timeout: 3000,
+  url: 'https://g.cn/generate_204',
+  lazy: true,
+  'max-failed-times': 3,
+  tolerance: 100,
+  icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
+  hidden: true,
+};
+
 // 定义分流策略组和对应的规则
 const serviceConfigs = [
-  {
-    key: 'captcha',
-    name: '人机验证',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Bot.png',
-    rules: ['RULE-SET,captcha,人机验证'],
-    direct: true,
-  },
   {
     key: 'ai',
     name: 'AI',
@@ -448,7 +455,7 @@ const serviceConfigs = [
       'PROCESS-NAME,OneDrive.exe,OneDrive',
       'PROCESS-NAME,OneDrive.Sync.Service.exe,OneDrive',
       'PROCESS-NAME,OneDriveStandaloneUpdater.exe,OneDrive',
-      'PROCESS-NAME,com.microsoft.skydrive,OneDrive', 
+      'PROCESS-NAME,com.microsoft.skydrive,OneDrive',
       // OneDrive相关进程，避免被误判使OneDrive的文件同步消耗大量流量
       // OneDrive网页访问经常不通，但是桌面和手机客户端都正常，因此只匹配进程，网页访问继续靠代理加速
     ],
@@ -653,20 +660,15 @@ function main(config) {
       // 构建 url-test 节点组
       const autoTestName = `${r.name}-自动选择`;
       generatedRegionGroups.push({
-        ...groupBaseOption,
+        ...urlTestBaseOption,
         name: autoTestName,
-        type: 'url-test',
-        tolerance: 100,
-        icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
         proxies: groupData.proxies,
-        hidden: true,
       });
 
       // 构建 select 节点组
       generatedRegionGroups.push({
-        ...groupBaseOption,
+        ...selectBaseOption,
         name: r.name,
-        type: 'select',
         icon: r.icon,
         proxies: [autoTestName, ...groupData.proxies],
       });
@@ -674,13 +676,19 @@ function main(config) {
   });
 
   if (otherProxies.length > 0) {
-    generatedRegionGroups.push({
-      ...groupBaseOption,
-      name: '其他节点',
-      type: 'select',
-      proxies: otherProxies,
-      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/World_Map.png',
-    });
+    generatedRegionGroups.push(
+      {
+        ...urlTestBaseOption,
+        name: '其他节点-自动选择',
+        proxies: otherProxies,
+      },
+      {
+        ...selectBaseOption,
+        name: '其他节点',
+        proxies: ['其他节点-自动选择', ...otherProxies],
+        icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/World_Map.png',
+      },
+    );
   }
 
   // 筛选类型为 select 的策略组
@@ -691,9 +699,8 @@ function main(config) {
   // 构建分流策略组
   const functionalGroups = [];
   functionalGroups.push({
-    ...groupBaseOption,
+    ...selectBaseOption,
     name: '默认代理',
-    type: 'select',
     proxies: [...groupNamesOfSelect],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
   });
@@ -717,33 +724,22 @@ function main(config) {
       }
 
       functionalGroups.push({
-        ...groupBaseOption,
+        ...selectBaseOption,
         name: svc.name,
-        type: 'select',
-        proxies: groupProxies,
         icon: svc.icon,
+        proxies: groupProxies,
       });
     }
   });
 
   // 添加其他策略组
-  functionalGroups.push(
-    {
-      ...groupBaseOption,
-      name: '下载专用',
-      type: 'select',
-      proxies: ['直连', '默认代理'],
-      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png',
-    },
-    {
-      ...groupBaseOption,
-      name: '直连',
-      type: 'select',
-      proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈'],
-      url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
-      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
-    },
-  );
+  functionalGroups.push({
+    ...selectBaseOption,
+    name: '直连',
+    proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈'],
+    url: 'https://connectivitycheck.platform.hicloud.com/generate_204',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png',
+  });
 
   // 构建 GLOBAL 全局策略组
   const allGroupNames = [
@@ -751,9 +747,8 @@ function main(config) {
     ...generatedRegionGroups.map((g) => g.name),
   ];
   const globalGroup = {
-    ...groupBaseOption,
+    ...selectBaseOption,
     name: 'GLOBAL',
-    type: 'select',
     proxies: allGroupNames,
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
   };
@@ -788,8 +783,6 @@ function main(config) {
 
     // 兜底规则
     'RULE-SET,gfw,默认代理',
-    'RULE-SET,cn,直连',
-    'DOMAIN-WILDCARD,*.cn,直连',
     'RULE-SET,cn_ip,直连',
     'MATCH,默认代理',
   ];
@@ -809,26 +802,14 @@ function main(config) {
 
   // 国内外 DNS 定义
   const chinaDNS = [
-    'https://dns.alidns.com/dns-query',
-    'https://doh.pub/dns-query',
+    'https://dns.alidns.com/dns-query#DIRECT',
+    'https://doh.pub/dns-query#DIRECT',
   ];
   const foreignDNS = [
     'https://v.recipes/dns-cn#DIRECT',
     'https://v.recipes/dns-ecs#DIRECT',
     'https://1.1.1.1/dns-query#默认代理',
     'https://8.8.8.8/dns-query#默认代理',
-  ];
-
-  // 直连规则集列表
-  const direct_rules = [
-    'private',
-    'cn',
-    'googlefcm',
-    'steam_cn',
-    'epicgames',
-    'nvidia_cn',
-    'microsoft_cn',
-    'cloudflare_cn',
   ];
 
   config['dns'] = {
@@ -842,35 +823,21 @@ function main(config) {
     'fake-ip-range': '198.18.0.1/16',
     'fake-ip-range-v6': 'fc00::/18',
     'fake-ip-filter': [
-      '+.cn',
+      'rule-set:private',
       'rule-set:category_ntp',
       'rule-set:fakeip_filter',
       'rule-set:connectivity_check',
-      ...direct_rules.map((rule) => `rule-set:${rule}`),
+      'rule-set:geolocation_cn',
     ],
-    'proxy-server-nameserver': [
-      'https://doh.pub/dns-query#DIRECT',
-      'https://dns.alidns.com/dns-query#DIRECT',
-    ],
-    'default-nameserver': [
-      '223.5.5.5', 
-      '119.29.29.29', 
-      '2400:3200::1', 
-      '2400:3200:baba::1',
-    ],
+    'proxy-server-nameserver': [...chinaDNS],
+    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: [...foreignDNS],
-    'proxy-server-nameserver': [
-      'https://dns.alidns.com/dns-query#DIRECT',
-      'https://doh.pub/dns-query#DIRECT',
-    ],
     'nameserver-policy': {
       '+.arpa': 'system',
-      '+.ip6.arpa': 'system',
-      '+.cn': [...chinaDNS],
-      [`rule-set:${[...direct_rules, 'microsoft', 'apple', 'spotify', 'captcha'].join(',')}`]:
-        [...chinaDNS],
+      'rule-set:private': 'system',
+      'rule-set:cn': [...chinaDNS],
     },
-    'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
+    'direct-nameserver': [...chinaDNS],
     'direct-nameserver-follow-policy': true,
   };
 
@@ -915,7 +882,9 @@ function main(config) {
   config['ntp'] = {
     enable: true,
     'write-to-system': false,
-    server: 'cn.ntp.org.cn',
+    server: 'ntp.aliyun.com',
+    port: 123,
+    interval: 60,
   };
 
   config['tun'] = {

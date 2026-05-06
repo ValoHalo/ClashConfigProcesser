@@ -24,11 +24,11 @@ proxy-providers:
   provider1:
     <<: [*p, *exclude]
     url: '此处填入机场订阅链接'
-    path: ./proxy_providers/provider1.txt
+    path: ./proxy_providers/provider1.yaml
 #  provider2:
 #   <<: [*p, *exclude]
 #   url: '此处填入机场订阅链接'
-#   path: ./proxy_providers/provider2.txt
+#   path: ./proxy_providers/provider2.yaml
 
 # --- 基础全局配置 ---
 
@@ -58,8 +58,8 @@ proxies:
 chinaDNS:
   &chinaDNS [
     'system',
-    'https://dns.alidns.com/dns-query',
-    'https://doh.pub/dns-query',
+    'https://dns.alidns.com/dns-query#DIRECT',
+    'https://doh.pub/dns-query#DIRECT',
   ]
 foreignDNS:
   &foreignDNS [
@@ -78,21 +78,12 @@ dns:
   fake-ip-range: 198.18.0.1/16
   fake-ip-range-v6: 'fc00::/18'
   fake-ip-filter:
-    - '+.cn'
     - 'rule-set:private'
     - 'rule-set:category_ntp'
     - 'rule-set:fakeip_filter'
     - 'rule-set:connectivity_check'
-    - 'rule-set:cn'
-    - 'rule-set:googlefcm'
-    - 'rule-set:steam_cn'
-    - 'rule-set:epicgames'
-    - 'rule-set:nvidia_cn'
-    - 'rule-set:microsoft_cn'
-    - 'rule-set:cloudflare_cn'
-  proxy-server-nameserver:
-    - 'https://doh.pub/dns-query#DIRECT'
-    - 'https://dns.alidns.com/dns-query#DIRECT'
+    - 'rule-set:geolocation_cn'
+  proxy-server-nameserver: *chinaDNS
   default-nameserver:
     - '223.5.5.5'
     - '119.29.29.29'
@@ -100,9 +91,9 @@ dns:
   nameserver-policy:
     '*': 'system'
     '+.arpa': 'system'
-    '+.cn': *chinaDNS
-    'rule-set:private,cn,steam_cn,epicgames,nvidia_cn,cloudflare_cn,microsoft_cn,microsoft,googlefcm,apple,spotify,captcha': *chinaDNS
-  direct-nameserver: ['system', '223.5.5.5', '119.29.29.29']
+    'rule-set:private': 'system'
+    'rule-set:cn': *chinaDNS
+  direct-nameserver: *chinaDNS
   direct-nameserver-follow-policy: true
 
 hosts:
@@ -132,7 +123,9 @@ sniffer:
 ntp:
   enable: true
   write-to-system: false
-  server: cn.ntp.org.cn
+  server: 'ntp.aliyun.com'
+  port: 123
+  interval: 60
 
 tun:
   enable: true
@@ -166,9 +159,9 @@ rule-providers:
     path: './ruleset/DownloadApps.txt'
   fakeip_filter:
     <<: *rp_domain
-    format: text
-    url: 'https://fastly.jsdelivr.net/gh/juewuy/ShellCrash@dev/public/fake_ip_filter.list'
-    path: './ruleset/fakeip_filter.list'
+    format: mrs
+    url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs'
+    path: './ruleset/fakeip-filter.mrs'
   epicgames:
     <<: *rp_domain
     format: mrs
@@ -227,7 +220,7 @@ rule-providers:
   telegram_ip:
     <<: *rp_ip
     format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/telegram_ip.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs'
     path: './ruleset/telegram_ip.mrs'
   pixiv:
     <<: *rp_domain
@@ -239,11 +232,11 @@ rule-providers:
     format: mrs
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs'
     path: './ruleset/steam.mrs'
-  steam_cn:
+  games_cn:
     <<: *rp_domain
     format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs'
-    path: './ruleset/steam@cn.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-games@cn.mrs'
+    path: './ruleset/category-games@cn.mrs'
   twitter:
     <<: *rp_domain
     format: mrs
@@ -269,10 +262,15 @@ rule-providers:
     format: mrs
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/gfw.mrs'
     path: './ruleset/gfw.mrs'
+  geolocation_cn:
+    <<: *rp_domain
+    format: mrs
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-cn.mrs'
+    path: './ruleset/geolocation-cn.mrs'
   cn:
     <<: *rp_domain
     format: mrs
-    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/direct.mrs'
     path: './ruleset/cn.mrs'
   cn_ip:
     <<: *rp_ip
@@ -339,11 +337,6 @@ rule-providers:
     format: mrs
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ntp.mrs'
     path: './ruleset/category-ntp.mrs'
-  captcha:
-    <<: *rp_domain
-    format: mrs
-    url: 'https://fastly.jsdelivr.net/gh/echs-top/proxy@main/rules/mrs/captcha_domain.mrs'
-    path: './ruleset/captcha_domain.mrs'
   instagram:
     <<: *rp_domain
     format: mrs
@@ -358,21 +351,21 @@ group_common_select:
     type: select,
     interval: 600,
     timeout: 3000,
+    max-failed-times: 3,
     url: 'https://g.cn/generate_204',
     lazy: true,
-    max-failed-times: 3,
   }
 
 group_common_auto:
   &group_common_auto {
+    type: url-test,
     interval: 600,
     timeout: 3000,
-    type: url-test,
-    tolerance: 100,
-    include-all: true,
+    max-failed-times: 3,
     url: 'https://g.cn/generate_204',
     lazy: true,
-    max-failed-times: 3,
+    tolerance: 100,
+    include-all: true,
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
     hidden: true,
   }
@@ -410,24 +403,6 @@ proxy-groups:
         '其他节点',
       ]
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png'
-
-  # 分流策略组
-  - name: '人机验证'
-    <<: *group_common_select
-    proxies:
-      [
-        '默认代理',
-        '直连',
-        '香港',
-        '日本',
-        '美国',
-        '新加坡',
-        '台湾省',
-        '低倍率节点',
-        '高倍率节点',
-        '其他节点',
-      ]
-    icon: 'https://fastly.jsdelivr.net/gh/MiToverG422/Qure@master/IconSet/Color/Bot.png'
 
   - name: 'AI'
     <<: [*group_common_select, *proxies]
@@ -554,11 +529,6 @@ proxy-groups:
     proxies: ['REJECT', 'REJECT-DROP', 'PASS']
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Advertising.png'
 
-  - name: '下载专用'
-    <<: *group_common_select
-    proxies: ['直连', '默认代理']
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png'
-
   - name: '直连'
     <<: *group_common_select
     proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈']
@@ -631,8 +601,12 @@ proxy-groups:
   - name: '其他节点'
     <<: *group_common_select
     include-all: true
+    proxies: ['其他节点-自动选择']
     exclude-filter: '(?i)港|HK|🇭🇰|日本|JP|🇯🇵|美|US|🇺🇸|新加坡|SG|🇸🇬|台湾|TW|🇹🇼|直连'
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/World_Map.png'
+  - name: '其他节点-自动选择'
+    <<: *group_common_auto
+    exclude-filter: '(?i)港|HK|🇭🇰|日本|JP|🇯🇵|美|US|🇺🇸|新加坡|SG|🇸🇬|台湾|TW|🇹🇼|直连'
 
 # --- 路由规则 (Rules) ---
 rules:
@@ -641,14 +615,15 @@ rules:
   - RULE-SET,private_ip,直连,no-resolve
 
   # 国内直连
-  - RULE-SET,steam_cn,直连
+  - RULE-SET,games_cn,直连
   - RULE-SET,epicgames,直连
   - RULE-SET,nvidia_cn,直连
   - RULE-SET,microsoft_cn,直连
   - RULE-SET,cloudflare_cn,直连
+  - DOMAIN,fsend.cn,直连
 
   # 进程规则
-  - RULE-SET,DownloadApps,下载专用 # 常见磁力下载软件
+  - RULE-SET,DownloadApps,直连 # 常见磁力下载软件
   - PROCESS-NAME,com.perol.pixez,Pixiv
   - PROCESS-NAME,com.perol.play.pixez,Pixiv
 
@@ -659,7 +634,6 @@ rules:
   - AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT
 
   # 代理规则（域名）
-  - RULE-SET,captcha,人机验证
   - RULE-SET,ai,AI
   - RULE-SET,youtube,YouTube
   - RULE-SET,googlefcm,FCM
@@ -689,7 +663,5 @@ rules:
 
   # 兜底规则
   - RULE-SET,gfw,默认代理
-  - RULE-SET,cn,直连
-  - DOMAIN-WILDCARD,*.cn,直连
   - RULE-SET,cn_ip,直连
   - MATCH,默认代理

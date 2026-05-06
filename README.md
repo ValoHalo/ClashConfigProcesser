@@ -1,6 +1,6 @@
 # MyClash
 
-Mihomo（Clash Meta）配置全局覆写脚本，无DNS泄露，内置多项分流策略、地区策略，实现全局排除节点、自动识别节点倍率等功能
+Mihomo（Clash Meta）配置覆写脚本，无DNS泄露（图一乐），内置多项分流策略、地区策略，实现全局排除节点、自动识别节点倍率等功能
 
 该仓库同样提供了yaml配置文件，效果和脚本基本一致，有需要的可查看：[mihomoConfig.yaml](https://github.com/ValoHalo/ClashConfigProcesser/blob/modified/Config/mihomoConfig.yaml)
 
@@ -25,7 +25,7 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 - 仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件
 
-- 脚本内置的DNS配置已解决DNS泄露问题，建议不要开启代理软件的DNS覆写
+- 脚本内置的DNS配置已解决DNS泄露问题（图一乐），建议不要开启代理软件的DNS覆写
 
 - 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata
 
@@ -44,7 +44,6 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 > - _若不需要某个策略组，可在脚本中将对应开关设为 `false`_
 
 - `默认代理`
-- `人机验证`
 - `AI`
 - `YouTube`
 - `FCM`
@@ -63,7 +62,6 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 - `TikTok`
 - `Netflix`
 - `广告拦截`
-- `下载专用`
 - `直连` （可自定义IP优先级，建议使用 `IPv4优先`，防止出现一些问题）
 
 ## 内置节点组
@@ -101,8 +99,8 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 - [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
 
-- [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters)
+- [wwqgtxx/clash-rules](https://github.com/wwqgtxx/clash-rules)
 
-- [DustinWin/ruleset_geodata](https://github.com/DustinWin/ruleset_geodata)
+- [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters)
 
 - [Koolson/Qure](https://github.com/Koolson/Qure)

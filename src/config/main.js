@@ -18,6 +18,7 @@ function main(config) {
 
   // --- 构建地区组和倍率组 ---
 
+  // 节点分类
   const enabledDefinitions = regionDefinitions.filter(
     (r) => regionDefinitionsEnable[r.name] === true,
   );
@@ -46,6 +47,7 @@ function main(config) {
     }
   }
 
+  // 构建地区策略组
   const generatedRegionGroups = enabledDefinitions
     .filter((r) => regionGroups[r.name].proxies.length > 0)
     .flatMap((r) =>
@@ -64,22 +66,16 @@ function main(config) {
 
   // --- 构建分流策略组 ---
 
-  // 筛选类型为 select 的策略组
-  const groupNamesOfSelect = generatedRegionGroups
-    .filter((g) => g.type === 'select')
-    .map((g) => g.name);
-
   const functionalGroups = [];
   const finalRules = [...rules];
   const finalRuleProviders = { ...baseRuleProviders };
 
-  functionalGroups.push({
-    ...selectBaseOption,
-    name: '默认代理',
-    proxies: [...groupNamesOfSelect],
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
-  });
+  // 筛选类型为 select 的地区策略组
+  const groupNamesOfSelect = generatedRegionGroups
+    .filter((g) => g.type === 'select')
+    .map((g) => g.name);
 
+  // 定义分流策略组对应的策略组成员
   const proxyModes = {
     default: ['默认代理', ...groupNamesOfSelect],
     direct: ['默认代理', '直连', ...groupNamesOfSelect],
@@ -87,17 +83,24 @@ function main(config) {
     reject: ['REJECT', 'REJECT-DROP', 'PASS'],
   };
 
+  // 生成默认代理策略组
+  functionalGroups.push({
+    ...selectBaseOption,
+    name: '默认代理',
+    proxies: [...groupNamesOfSelect],
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
+  });
+
   // 构建分流策略组
   for (const svc of serviceConfigs) {
     if (!ruleOptionsEnable[svc.key]) continue;
+
     finalRules.push(...svc.rules);
 
     // 添加分流策略组对应的 Rule Providers
-    for (const providerName of svc.providers || []) {
-      const provider = serviceRuleProviders[providerName];
-      if (provider) {
-        finalRuleProviders[providerName] = provider;
-      }
+    const providers = svc.providers || {};
+    for (const [providerName, providerConfig] of Object.entries(providers)) {
+      finalRuleProviders[providerName] = providerConfig;
     }
 
     functionalGroups.push({

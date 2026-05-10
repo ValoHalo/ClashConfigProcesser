@@ -2,6 +2,23 @@
 
 // --- 静态配置区域 ---
 
+// 预定义 rules
+const rules = [
+  // 私有网络直连
+  'RULE-SET,private,直连',
+  'RULE-SET,private_ip,直连,no-resolve',
+
+  // 国内直连
+  'RULE-SET,games_cn,直连',
+  'RULE-SET,epicgames,直连',
+  'RULE-SET,nvidia_cn,直连',
+  'RULE-SET,microsoft_cn,直连',
+  'DOMAIN,fsend.cn,直连',
+
+  // 进程规则
+  'RULE-SET,DownloadApps,直连', // 常见磁力下载软件
+];
+
 // 定义全局排除节点的正则表达式
 const excludeFilter =
   /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|超时|收藏|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|⚠️|@|Expire|http|com/u;
@@ -62,14 +79,8 @@ const ruleProviderCommonClassical = {
   behavior: 'classical',
 };
 
-// 定义 Rule Providers
-const ruleProviders = {
-  adblockmihomolite: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.mrs',
-    path: './ruleset/adblockmihomolite.mrs',
-  },
+// 定义基础 Rule Providers
+const baseRuleProviders = {
   DownloadApps: {
     ...ruleProviderCommonClassical,
     ...ruleProviderFormatText,
@@ -94,12 +105,6 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nvidia@cn.mrs',
     path: './ruleset/nvidia@cn.mrs',
   },
-  ai: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs',
-    path: './ruleset/ai.mrs',
-  },
   youtube: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -118,12 +123,6 @@ const ruleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/google.mrs',
     path: './ruleset/google_ip.mrs',
   },
-  github: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs',
-    path: './ruleset/github.mrs',
-  },
   microsoft: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -135,18 +134,6 @@ const ruleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft@cn.mrs',
     path: './ruleset/microsoft@cn.mrs',
-  },
-  telegram: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/telegram.mrs',
-    path: './ruleset/telegram.mrs',
-  },
-  telegram_ip: {
-    ...ruleProviderCommonIpcidr,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs',
-    path: './ruleset/telegram_ip.mrs',
   },
   steam: {
     ...ruleProviderCommonDomain,
@@ -265,33 +252,87 @@ function createRegionGroup(name, icon, proxies) {
   ];
 }
 
-// 定义分流策略组
+// 定义分流策略组配置
 const serviceConfigs = [
   {
     key: 'ai',
     name: 'AI',
+    providers: {
+      ai: {
+        ...ruleProviderCommonDomain,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs',
+        path: './ruleset/ai.mrs',
+      },
+    },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
+    rules: ['RULE-SET,ai,AI'],
   },
   {
     key: 'github',
     name: 'GitHub',
+    providers: {
+      github: {
+        ...ruleProviderCommonDomain,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs',
+        path: './ruleset/github.mrs',
+      },
+    },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png',
+    rules: ['RULE-SET,github,GitHub'],
   },
   {
     key: 'telegram',
     name: 'Telegram',
+    providers: {
+      telegram: {
+        ...ruleProviderCommonDomain,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/telegram.mrs',
+        path: './ruleset/telegram.mrs',
+      },
+      telegram_ip: {
+        ...ruleProviderCommonIpcidr,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs',
+        path: './ruleset/telegram_ip.mrs',
+      },
+    },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png',
+    rules: [
+      'RULE-SET,telegram,Telegram',
+      'RULE-SET,telegram_ip,Telegram,no-resolve',
+    ],
   },
   {
     key: 'steam',
     name: 'Steam',
+    providers: {
+      steam: {
+        ...ruleProviderCommonDomain,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs',
+        path: './ruleset/steam.mrs',
+      },
+    },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Steam.png',
+    rules: ['RULE-SET,steam,Steam'],
   },
   {
     key: 'adblock',
     name: '广告拦截',
     proxyMode: 'reject',
+    providers: {
+      adblockmihomolite: {
+        ...ruleProviderCommonDomain,
+        ...ruleProviderFormatMrs,
+        url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.mrs',
+        path: './ruleset/adblockmihomolite.mrs',
+      },
+    },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Advertising.png',
+    rules: ['RULE-SET,adblockmihomolite,广告拦截'],
   },
 ];
 
@@ -313,6 +354,7 @@ function main(config) {
 
   // --- 构建地区组和倍率组 ---
 
+  // 节点分类
   const regionGroups = Object.fromEntries(
     regionDefinitions.map((r) => [r.name, { ...r, proxies: [] }]),
   );
@@ -338,6 +380,7 @@ function main(config) {
     }
   }
 
+  // 构建地区策略组
   const generatedRegionGroups = regionDefinitions
     .filter((r) => regionGroups[r.name].proxies.length > 0)
     .flatMap((r) =>
@@ -356,13 +399,22 @@ function main(config) {
 
   // --- 构建分流策略组 ---
 
-  // 筛选类型为 select 的策略组
+  const functionalGroups = [];
+  const finalRules = [...rules];
+  const finalRuleProviders = { ...baseRuleProviders };
+
+  // 筛选类型为 select 的地区策略组
   const groupNamesOfSelect = generatedRegionGroups
     .filter((g) => g.type === 'select')
     .map((g) => g.name);
 
-  // 构建分流策略组
-  const functionalGroups = [];
+  // 定义分流策略组对应的策略组成员
+  const proxyModes = {
+    default: ['代理', ...groupNamesOfSelect],
+    reject: ['REJECT', 'REJECT-DROP', 'PASS'],
+  };
+
+  // 生成代理策略组
   functionalGroups.push({
     ...selectBaseOption,
     name: '代理',
@@ -370,17 +422,21 @@ function main(config) {
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
   });
 
-  const proxyModes = {
-    default: ['代理', ...groupNamesOfSelect],
-    reject: ['REJECT', 'REJECT-DROP', 'PASS'],
-  };
-
+  // 构建分流策略组
   for (const svc of serviceConfigs) {
+    finalRules.push(...svc.rules);
+
+    // 添加分流策略组对应的 Rule Providers
+    const providers = svc.providers || {};
+    for (const [providerName, providerConfig] of Object.entries(providers)) {
+      finalRuleProviders[providerName] = providerConfig;
+    }
+
     functionalGroups.push({
       ...selectBaseOption,
       name: svc.name,
       icon: svc.icon,
-      proxies: proxyModes[svc.proxyMode || 'default'],
+      proxies: [...proxyModes[svc.proxyMode || 'default']],
     });
   }
 
@@ -428,7 +484,7 @@ function main(config) {
     ...functionalGroups,
     ...generatedRegionGroups,
   ];
-  config['rule-providers'] = ruleProviders;
+  config['rule-providers'] = finalRuleProviders;
 
   config['allow-lan'] = true;
   config['ipv6'] = true;
@@ -521,36 +577,14 @@ function main(config) {
   };
 
   config['rules'] = [
-    // 私有网络直连
-    'RULE-SET,private,直连',
-    'RULE-SET,private_ip,直连,no-resolve',
+    ...finalRules,
 
-    // 国内直连
-    'RULE-SET,games_cn,直连',
-    'RULE-SET,epicgames,直连',
-    'RULE-SET,nvidia_cn,直连',
-    'RULE-SET,microsoft_cn,直连',
-    'DOMAIN,fsend.cn,直连',
-
-    // 进程规则
-    'RULE-SET,DownloadApps,直连', // 常见磁力下载软件
-
-    // 广告拦截
-    'RULE-SET,adblockmihomolite,广告拦截',
-
-    // 代理规则（域名）
-    'RULE-SET,ai,AI',
+    // 代理规则
     'RULE-SET,youtube,代理',
     'RULE-SET,google,代理',
-    'RULE-SET,github,GitHub',
-    'RULE-SET,microsoft,代理',
-    'RULE-SET,telegram,Telegram',
-    'RULE-SET,steam,Steam',
-    'RULE-SET,twitter,代理',
-
-    // 代理规则（IP）
     'RULE-SET,google_ip,代理,no-resolve',
-    'RULE-SET,telegram_ip,Telegram,no-resolve',
+    'RULE-SET,microsoft,代理',
+    'RULE-SET,twitter,代理',
     'RULE-SET,twitter_ip,代理,no-resolve',
 
     // 兜底规则

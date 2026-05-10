@@ -1,4 +1,4 @@
-// rules 预定义
+// 预定义 rules
 const rules = [
   // 私有网络直连
   'RULE-SET,private,直连',

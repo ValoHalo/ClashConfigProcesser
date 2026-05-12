@@ -15,20 +15,24 @@ const fileOrder = [
   'config/main.js',
 ];
 
-let combined = '';
-for (const relPath of fileOrder) {
-  const fullPath = path.join(SRC_DIR, relPath);
-  if (!fs.existsSync(fullPath)) {
-    console.error(`错误：找不到源文件 ${fullPath}`);
-    process.exit(1);
-  }
-  const content = fs.readFileSync(fullPath, 'utf8');
-  combined += `\n` + content.trim() + '\n';
-}
+const combined =
+  fileOrder
+    .map((relPath) => {
+      const fullPath = path.join(SRC_DIR, relPath);
+
+      if (!fs.existsSync(fullPath)) {
+        console.error(`错误：找不到源文件 ${fullPath}`);
+        process.exit(1);
+      }
+
+      return fs.readFileSync(fullPath, 'utf8').trim();
+    })
+    .join('\n\n') + '\n';
 
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
 fs.writeFileSync(OUTPUT_FILE, combined, 'utf8');
+
 console.log(`✅ 构建成功：${OUTPUT_FILE}`);

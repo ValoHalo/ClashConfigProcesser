@@ -35,7 +35,7 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 - 脚本内置的DNS配置已解决DNS泄露问题（图一乐），建议不要开启代理软件的DNS覆写
 
-- 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata
+- 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata，减少内存占用
 
 - 规则以 `domain` 与 `ipcidr` 行为为主，相比 `classical` 查询效率更高
 
@@ -49,9 +49,11 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 ## 内置策略组
 
-> - _若不需要某个策略组，可在脚本中将对应开关设为 `false`_
+> - _若不需要某个分流策略组，可在脚本中将对应开关设为 `false`_
 
 - `默认代理`
+- `自动选择`
+- `负载均衡`
 - `AI`
 - `YouTube`
 - `FCM`
@@ -74,7 +76,7 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 ## 内置节点组
 
-> - _所有组均为手动选择（select），内部包含对应的自动选择策略组_
+> - _所有组均为手动选择（select），内部包含对应的自动选择策略组和负载均衡策略组_
 > - _若不需要某个节点组，可在脚本中将对应开关设为 `false`_
 > - _若机场订阅中不存在对应节点组的节点，则该节点组不会显示_
 > - _未匹配节点组或未启用节点组的节点，将统一归类至 「其他节点」_

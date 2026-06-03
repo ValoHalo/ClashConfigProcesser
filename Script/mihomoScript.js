@@ -250,6 +250,15 @@ const urlTestBaseOption = {
   hidden: true,
 };
 
+// load-balance策略组通用配置
+const loadBalanceBaseOption = {
+  ...groupBaseOption,
+  type: 'load-balance',
+  strategy: 'sticky-sessions',
+  icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Round_Robin.png',
+  hidden: true,
+};
+
 // 定义分流策略组配置
 const serviceConfigs = [
   {
@@ -592,6 +601,7 @@ const serviceConfigs = [
 // 定义创建地区策略组的函数
 function createRegionGroup(name, icon, proxies) {
   const autoTestName = `${name}-自动选择`;
+  const loadBalanceName = `${name}-负载均衡`;
   return [
     {
       ...urlTestBaseOption,
@@ -599,10 +609,15 @@ function createRegionGroup(name, icon, proxies) {
       proxies,
     },
     {
+      ...loadBalanceBaseOption,
+      name: loadBalanceName,
+      proxies,
+    },
+    {
       ...selectBaseOption,
       name,
       icon,
-      proxies: [autoTestName, ...proxies],
+      proxies: [...proxies, autoTestName, loadBalanceName],
     },
   ];
 }
@@ -693,19 +708,39 @@ function main(config) {
 
   // 定义分流策略组对应的策略组成员
   const proxyModes = {
-    default: ['默认代理', ...groupNamesOfSelect],
-    direct: ['默认代理', '直连', ...groupNamesOfSelect],
-    directfirst: ['直连', '默认代理', ...groupNamesOfSelect],
+    default: ['默认代理', '自动选择', '负载均衡', ...groupNamesOfSelect],
+    direct: ['默认代理', '直连', '自动选择', '负载均衡', ...groupNamesOfSelect],
+    directfirst: [
+      '直连',
+      '默认代理',
+      '自动选择',
+      '负载均衡',
+      ...groupNamesOfSelect,
+    ],
     reject: ['REJECT', 'REJECT-DROP', 'PASS'],
   };
 
-  // 生成默认代理策略组
-  functionalGroups.push({
-    ...selectBaseOption,
-    name: '默认代理',
-    proxies: [...groupNamesOfSelect],
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
-  });
+  // 生成基础策略组
+  functionalGroups.push(
+    {
+      ...selectBaseOption,
+      name: '默认代理',
+      proxies: [...groupNamesOfSelect, '自动选择', '负载均衡'],
+      icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png',
+    },
+    {
+      ...urlTestBaseOption,
+      name: '自动选择',
+      'include-all': true,
+      'exclude-type': 'DIRECT',
+    },
+    {
+      ...loadBalanceBaseOption,
+      name: '负载均衡',
+      'include-all': true,
+      'exclude-type': 'DIRECT',
+    },
+  );
 
   // 构建分流策略组
   for (const svc of serviceConfigs) {
@@ -813,8 +848,6 @@ function main(config) {
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: [...foreignDNS],
     'nameserver-policy': {
-      '+.arpa': 'system',
-      'rule-set:private': 'system',
       'rule-set:cn': [...chinaDNS],
     },
     'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],

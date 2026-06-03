@@ -28,6 +28,7 @@ const ruleOptionsEnable = {
   adblock: true, // 广告拦截
   onedrive: true, // OneDrive进程，包括PC和移动端相关进程
   dlsite: true, // DLsite，后续可能会拓展到其他日本平台，因为老日非常喜欢锁IP
+  hentai: false,
 };
 
 /**
@@ -54,6 +55,13 @@ const regionDefinitionsEnable = {
  */
 const excludeFilterEnable = true;
 
+/**
+ * DNS覆写配置
+ * true = 使用脚本内置 DNS 配置
+ * false = 保留订阅原始 DNS 配置
+ */
+const dnsOverwriteEnable = false;
+
 // 定义全局排除节点的正则表达式，用于排除非地区的信息节点
 const excludeFilter =
   /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|超时|收藏|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|⚠️|@|Expire|http|com/u;
@@ -69,6 +77,7 @@ const rules = [
 
   // 国内直连
   'RULE-SET,games_cn,直连',
+  'RULE-SET,steam_cn,直连',
   'RULE-SET,epicgames,直连',
   'RULE-SET,nvidia_cn,直连',
   'RULE-SET,cloudflare_cn,直连',
@@ -163,6 +172,12 @@ const baseRuleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/dlsite.mrs',
     path: './ruleset/dlsite.mrs',
   },
+  steam_cn: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs',
+    path: './ruleset/steam_cn.mrs',
+  },
   nvidia_cn: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -222,6 +237,12 @@ const baseRuleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple@cn.mrs',
     path: './ruleset/apple@cn.mrs',
+  },
+  ehentai: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/ehentai.mrs',
+    path: './ruleset/ehentai.mrs',
   },
 };
 
@@ -346,6 +367,16 @@ const serviceConfigs = [
     name: 'DLsite',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure/blob/master/IconSet/Available_Alt.png', // FlC不支持图标显示，随便弄一个图标占位
     rules: ['RULE-SET,dlsite,DLsite',],
+  },
+  {
+    key: 'hentai',
+    name: 'Hentai',
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Pornhub.png',
+    rules: [
+      'RULE-SET,ehentai,Hentai',
+      'DOMAIN-SUFFIX,hanime1.me,Hentai',
+      'DOMAIN-SUFFIX,iwara.tv,Hentai',
+    ],
   },
   {
     key: 'github',
@@ -821,37 +852,47 @@ function main(config) {
     'store-fake-ip': true,
   };
 
-  // 国内外 DNS 定义
-  const chinaDNS = [
-    'https://dns.alidns.com/dns-query#DIRECT',
-    'https://doh.pub/dns-query#DIRECT',
-  ];
-  const foreignDNS = [
-    'https://v.recipes/dns-cn#DIRECT',
-    'https://v.recipes/dns-ecs#DIRECT',
-    'https://1.1.1.1/dns-query#默认代理',
-    'https://8.8.8.8/dns-query#默认代理',
-  ];
+  if (dnsOverwriteEnable) {
+    const originalNameserverPolicy =
+      config['dns']?.['nameserver-policy'] &&
+      typeof config['dns']['nameserver-policy'] === 'object' &&
+      !Array.isArray(config['dns']['nameserver-policy'])
+        ? config['dns']['nameserver-policy']
+        : {};
 
-  config['dns'] = {
-    enable: true,
-    ipv6: true,
-    listen: ':10053',
-    'cache-algorithm': 'arc',
-    'use-hosts': true,
-    'use-system-hosts': true,
-    'enhanced-mode': 'fake-ip',
-    'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-range-v6': 'fc00::/18',
-    'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter'],
-    'proxy-server-nameserver': [...chinaDNS],
-    'default-nameserver': ['223.5.5.5', '119.29.29.29'],
-    nameserver: [...foreignDNS],
-    'nameserver-policy': {
-      'rule-set:cn': [...chinaDNS],
-    },
-    'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
-  };
+    // 国内外 DNS 定义
+    const chinaDNS = [
+      'https://dns.alidns.com/dns-query#DIRECT',
+      'https://doh.pub/dns-query#DIRECT',
+    ];
+    const foreignDNS = [
+      'https://v.recipes/dns-cn#DIRECT',
+      'https://v.recipes/dns-ecs#DIRECT',
+      'https://1.1.1.1/dns-query#默认代理',
+      'https://8.8.8.8/dns-query#默认代理',
+    ];
+
+    config['dns'] = {
+      enable: true,
+      ipv6: true,
+      listen: ':10053',
+      'cache-algorithm': 'arc',
+      'use-hosts': true,
+      'use-system-hosts': true,
+      'enhanced-mode': 'fake-ip',
+      'fake-ip-range': '198.18.0.1/16',
+      'fake-ip-range-v6': 'fc00::/18',
+      'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter'],
+      'proxy-server-nameserver': [...chinaDNS],
+      'default-nameserver': ['223.5.5.5', '119.29.29.29'],
+      nameserver: [...foreignDNS],
+      'nameserver-policy': {
+        ...originalNameserverPolicy,
+        'rule-set:cn': [...chinaDNS],
+      },
+      'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
+    };
+  }
 
   config['hosts'] = {
     'dns.alidns.com': ['223.5.5.5', '223.6.6.6'],

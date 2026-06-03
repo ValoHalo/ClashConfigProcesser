@@ -35,6 +35,8 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 - 脚本内置的DNS配置已解决DNS泄露问题（图一乐），建议不要开启代理软件的DNS覆写
 
+- 若需要保留订阅原始 DNS 配置，可在脚本中将 `dnsOverwriteEnable` 设为 `false`
+
 - 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata，减少内存占用
 
 - 规则以 `domain` 与 `ipcidr` 行为为主，相比 `classical` 查询效率更高

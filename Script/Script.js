@@ -11,7 +11,6 @@ const rules = [
   // 国内直连
   'RULE-SET,games_cn,直连',
   'RULE-SET,epicgames,直连',
-  'RULE-SET,nvidia_cn,直连',
   'DOMAIN,fsend.cn,直连',
 
   // 进程规则
@@ -86,6 +85,20 @@ const baseRuleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/AIsouler/MyClash@main/Rules/DownloadApps.txt',
     path: './ruleset/DownloadApps.txt',
   },
+  private: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs',
+    path: './ruleset/private.mrs',
+    'path-in-bundle': 'geo/geosite/private.mrs',
+  },
+  private_ip: {
+    ...ruleProviderCommonIpcidr,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/private.mrs',
+    path: './ruleset/private_ip.mrs',
+    'path-in-bundle': 'geo/geoip/private.mrs',
+  },
   fakeip_filter: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
@@ -99,12 +112,19 @@ const baseRuleProviders = {
     path: './ruleset/epicgames.mrs',
     'path-in-bundle': 'geo/geosite/epicgames.mrs',
   },
-  nvidia_cn: {
+  games_cn: {
     ...ruleProviderCommonDomain,
     ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nvidia@cn.mrs',
-    path: './ruleset/nvidia@cn.mrs',
-    'path-in-bundle': 'geo/geosite/nvidia@cn.mrs',
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-games@cn.mrs',
+    path: './ruleset/category-games@cn.mrs',
+    'path-in-bundle': 'geo/geosite/category-games@cn.mrs',
+  },
+  github: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs',
+    path: './ruleset/github.mrs',
+    'path-in-bundle': 'geo/geosite/github.mrs',
   },
   youtube: {
     ...ruleProviderCommonDomain,
@@ -126,41 +146,6 @@ const baseRuleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/google.mrs',
     path: './ruleset/google_ip.mrs',
     'path-in-bundle': 'geo/geoip/google.mrs',
-  },
-  games_cn: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-games@cn.mrs',
-    path: './ruleset/category-games@cn.mrs',
-    'path-in-bundle': 'geo/geosite/category-games@cn.mrs',
-  },
-  twitter: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/twitter.mrs',
-    path: './ruleset/twitter.mrs',
-    'path-in-bundle': 'geo/geosite/twitter.mrs',
-  },
-  twitter_ip: {
-    ...ruleProviderCommonIpcidr,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/twitter.mrs',
-    path: './ruleset/twitter_ip.mrs',
-    'path-in-bundle': 'geo/geoip/twitter.mrs',
-  },
-  private: {
-    ...ruleProviderCommonDomain,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs',
-    path: './ruleset/private.mrs',
-    'path-in-bundle': 'geo/geosite/private.mrs',
-  },
-  private_ip: {
-    ...ruleProviderCommonIpcidr,
-    ...ruleProviderFormatMrs,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/private.mrs',
-    path: './ruleset/private_ip.mrs',
-    'path-in-bundle': 'geo/geoip/private.mrs',
   },
   gfw: {
     ...ruleProviderCommonDomain,
@@ -231,37 +216,6 @@ const serviceConfigs = [
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
     rules: ['RULE-SET,ai,AI'],
-  },
-  {
-    key: 'github',
-    name: 'GitHub',
-    providers: {
-      github: {
-        ...ruleProviderCommonDomain,
-        ...ruleProviderFormatMrs,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs',
-        path: './ruleset/github.mrs',
-        'path-in-bundle': 'geo/geosite/github.mrs',
-      },
-    },
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png',
-    rules: ['RULE-SET,github,GitHub'],
-  },
-  {
-    key: 'microsoft',
-    name: 'Microsoft',
-    proxyMode: 'direct',
-    providers: {
-      microsoft: {
-        ...ruleProviderCommonDomain,
-        ...ruleProviderFormatMrs,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft.mrs',
-        path: './ruleset/microsoft.mrs',
-        'path-in-bundle': 'geo/geosite/microsoft.mrs',
-      },
-    },
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png',
-    rules: ['RULE-SET,microsoft,Microsoft'],
   },
   {
     key: 'telegram',
@@ -583,11 +537,10 @@ function main(config) {
     ...finalRules,
 
     // 代理规则
+    'RULE-SET,github,默认代理',
     'RULE-SET,youtube,默认代理',
     'RULE-SET,google,默认代理',
     'RULE-SET,google_ip,默认代理,no-resolve',
-    'RULE-SET,twitter,默认代理',
-    'RULE-SET,twitter_ip,默认代理,no-resolve',
 
     // 兜底规则
     'RULE-SET,gfw,默认代理',

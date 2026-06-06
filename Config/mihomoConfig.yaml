@@ -367,6 +367,7 @@ group_common:
       interval: 600,
       timeout: 3000,
       max-failed-times: 3,
+      empty-fallback: REJECT,
       url: 'https://g.cn/generate_204',
       lazy: true,
     }
@@ -377,6 +378,7 @@ group_common:
       interval: 600,
       timeout: 3000,
       max-failed-times: 3,
+      empty-fallback: REJECT,
       url: 'https://g.cn/generate_204',
       lazy: true,
       tolerance: 100,
@@ -392,6 +394,7 @@ group_common:
       interval: 600,
       timeout: 3000,
       max-failed-times: 3,
+      empty-fallback: REJECT,
       url: 'https://g.cn/generate_204',
       lazy: true,
       strategy: 'sticky-sessions',

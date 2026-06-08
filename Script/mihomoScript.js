@@ -60,7 +60,7 @@ const excludeFilterEnable = true;
  * true = 使用脚本内置 DNS 配置
  * false = 保留订阅原始 DNS 配置
  */
-const dnsOverwriteEnable = false;
+const dnsOverwriteEnable = true;
 
 // 定义全局排除节点的正则表达式，用于排除非地区的信息节点
 const excludeFilter =
@@ -81,6 +81,7 @@ const rules = [
   'RULE-SET,epicgames,直连',
   'RULE-SET,nvidia_cn,直连',
   'RULE-SET,cloudflare_cn,直连',
+  'RULE-SET,microsoft_cn,直连',
   'RULE-SET,apple_cn,直连',
   'DOMAIN,fsend.cn,直连',
 ];
@@ -171,6 +172,12 @@ const baseRuleProviders = {
     ...ruleProviderFormatMrs,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/dlsite.mrs',
     path: './ruleset/dlsite.mrs',
+  },
+  microsoft_cn: {
+    ...ruleProviderCommonDomain,
+    ...ruleProviderFormatMrs,
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft@cn.mrs',
+    path: './ruleset/microsoft_cn.mrs',
   },
   steam_cn: {
     ...ruleProviderCommonDomain,
@@ -875,22 +882,33 @@ function main(config) {
     config['dns'] = {
       enable: true,
       ipv6: true,
-      listen: ':10053',
+      listen: '127.0.0.1:10053',
+      'prefer-h3': true,
+      'respect-rules': false,
       'cache-algorithm': 'arc',
       'use-hosts': true,
       'use-system-hosts': true,
       'enhanced-mode': 'fake-ip',
       'fake-ip-range': '198.18.0.1/16',
-      'fake-ip-range-v6': 'fc00::/18',
+      'fake-ip-range6': 'fc00::/18',
       'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter'],
-      'proxy-server-nameserver': [...chinaDNS],
-      'default-nameserver': ['223.5.5.5', '119.29.29.29'],
+      // 'proxy-server-nameserver': [...chinaDNS],
+      'default-nameserver': ['223.5.5.5', '119.29.29.29', '114.114.114.114'],
+      'direct-nameserver-follow-policy': false,
+      'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29', '114.114.114.114'],
       nameserver: [...foreignDNS],
       'nameserver-policy': {
         ...originalNameserverPolicy,
         'rule-set:cn': [...chinaDNS],
       },
-      'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
+      'fallback': [
+        ...foreignDNS,
+      ],
+      'fallback-filter': {
+        geoip: true, 
+        'geoip-code': 'CN', 
+        'ipcidr': ['240.0.0.0/4', '127.0.0.1/8'] 
+      }
     };
   }
 

@@ -27,6 +27,21 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modif
 
 点击此链接即可查看脚本代码 ---> [mihomoScript.js](/Script/mihomoScript.js)
 
+## 本地测试工具
+
+安装依赖后，可以用测试工具把原始订阅 YAML 处理成脚本覆写后的最终配置：
+
+```powershell
+npm install
+npm run process-config -- input.yaml output.yaml
+```
+
+也可以临时覆盖 DNS 开关，方便检查 `nameserver-policy` 合并结果：
+
+```powershell
+npm run process-config -- input.yaml output.yaml --dns-overwrite true
+```
+
 ## 脚本说明
 
 - 仅适用于使用 [mihomo 内核](https://github.com/MetaCubeX/mihomo) 的代理客户端

@@ -1,0 +1,13 @@
+{
+  "name": "clash-config-processer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "process-config": "node Tools/process-config.js",
+    "check": "node --check Script/mihomoScript.js && node --check Tools/process-config.js"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  }
+}

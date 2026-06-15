@@ -640,6 +640,9 @@ function main(config) {
   // 移除已废弃的属性
   delete config['global-client-fingerprint'];
 
+  // 移除配置中不必要的 sub-rules 属性，避免产生冲突
+  delete config['sub-rules'];
+
   // 排除匹配到的节点
   if (excludeFilterEnable && Array.isArray(config.proxies)) {
     config.proxies = config.proxies.filter(

@@ -62,12 +62,6 @@ profile:
   store-selected: true
   store-fake-ip: true
 
-# 直连节点
-proxies:
-  - { name: '🇨🇳 直连 | IPv4优先', type: direct, ip-version: ipv4-prefer }
-  - { name: '🇨🇳 直连 | IPv6优先', type: direct, ip-version: ipv6-prefer }
-  - { name: '🇨🇳 直连 | 双栈', type: direct }
-
 # 国内外 DNS 定义
 chinaDNS:
   &chinaDNS [
@@ -90,20 +84,13 @@ dns:
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-range-v6: 'fc00::/18'
-  fake-ip-filter:
-    - 'rule-set:private'
-    - 'rule-set:fakeip_filter'
+  fake-ip-filter: ['rule-set:private', 'rule-set:fakeip_filter']
   proxy-server-nameserver: *chinaDNS
-  default-nameserver:
-    - '223.5.5.5'
-    - '119.29.29.29'
+  default-nameserver: ['223.5.5.5', '119.29.29.29']
   nameserver: *foreignDNS
   nameserver-policy:
     'rule-set:cn': *chinaDNS
-  direct-nameserver:
-    - 'system'
-    - '223.5.5.5'
-    - '119.29.29.29'
+  direct-nameserver: ['system', '223.5.5.5', '119.29.29.29']
 
 hosts:
   'dns.alidns.com': ['223.5.5.5', '223.6.6.6']
@@ -128,11 +115,18 @@ ntp:
 tun:
   enable: true
   stack: system
+  mtu: 9000
   auto-route: true
   strict-route: true
   auto-redirect: true
   auto-detect-interface: true
-  dns-hijack: ['udp://any:53', 'tcp://any:53']
+  dns-hijack: ['any:53', 'tcp://any:53']
+
+# 直连节点
+proxies:
+  - { name: '🇨🇳 直连 | IPv4优先', type: direct, ip-version: ipv4-prefer }
+  - { name: '🇨🇳 直连 | IPv6优先', type: direct, ip-version: ipv6-prefer }
+  - { name: '🇨🇳 直连 | 双栈', type: direct }
 
 # --- 规则集 ---
 

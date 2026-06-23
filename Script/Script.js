@@ -99,7 +99,7 @@ const baseRuleProviders = {
     ...ruleProviderCommonDomain,
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs',
     path: './ruleset/fakeip-filter.mrs',
-    'path-in-bundle': 'geo/geosite/fakeip-filter.mrs',
+    'path-in-bundle': 'geo/geosite/private.mrs',
   },
   epicgames: {
     ...ruleProviderCommonDomain,

@@ -159,7 +159,7 @@ rule-providers:
     <<: *rule_providers_domain
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs'
     path: './ruleset/fakeip-filter.mrs'
-    path-in-bundle: 'geo/geosite/fakeip-filter.mrs'
+    path-in-bundle: 'geo/geosite/private.mrs'
   private:
     <<: *rule_providers_domain
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs'

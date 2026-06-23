@@ -5,6 +5,8 @@ on:
     branches: ['main']
     paths:
       - 'Script/*'
+      - '**/*.yaml'
+      - '**/*.yml'
       - '.prettierrc*'
   workflow_dispatch:
 
@@ -24,12 +26,19 @@ jobs:
         with:
           node-version: '24'
 
-      - name: install prettier
-        run: npm install -g prettier
+      - name: install tools
+        run: |
+          npm install -g prettier
 
-      - name: format files
+      # 格式化 JS
+      - name: format js files
         run: |
           prettier Script/*.js --write
+
+      # 格式化 YAML
+      - name: format yaml files
+        run: |
+          prettier "**/*.{yml,yaml}" --write
 
       - name: commit and push changes
         run: |
@@ -39,6 +48,6 @@ jobs:
           git add .
 
           git diff --cached --quiet || (
-            git commit -m "build: 更新脚本"
+            git commit -m "chore: auto format"
             git push
           )

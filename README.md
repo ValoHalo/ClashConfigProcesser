@@ -1,31 +1,51 @@
 # MyClash
 
-Mihomo（Clash Meta）配置覆写脚本，无DNS泄露（图一乐），内置多项分流策略、地区策略，实现全局排除节点、自动识别节点倍率等功能
+Mihomo（Clash Meta）配置文件和覆写脚本，分别提供全量版和精简版，无DNS泄露（图一乐），内置多项分流策略、地区策略，实现全局排除节点、自动识别节点倍率等功能
 
-该仓库同样提供了yaml配置文件，效果和脚本基本一致，有需要的可查看：[mihomoConfig.yaml](/Config/mihomoConfig.yaml)
+友情推荐，非常好用、省电且内存占用低的代理软件：[Bettbox](https://github.com/appshubcc/Bettbox)
+
+## 配置文件
+
+> - _配置文件实现的效果和脚本基本一致_
+> - _不支持自定义 **启用/禁用** 策略组_
+> - _无法像脚本那样实现不生成未匹配到节点的策略组_
+
+- [mihomoConfig.yaml（全量版）](/Config/mihomoConfig.yaml)
+
+- [mihomoConfigLite.yaml（精简版）](/Config/mihomoConfigLite.yaml)
+
+## 覆写脚本
+
+### 使用方式
 
 > [!IMPORTANT]
 > **注意⚠️：该脚本仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件**
 
-## 使用方式
+#### 通过链接导入
 
-### 通过链接导入
+复制以下任意一个脚本链接后按如图所示步骤导入到代理客户端，以 [Bettbox](https://github.com/appshubcc/Bettbox) 为例
 
-复制以下脚本链接后按如图所示步骤导入到代理客户端，以 [Bettbox](https://github.com/appshubcc/Bettbox) 为例
+- 全量版（包含全部分流策略组）
 
 ```txt
 https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modified/Script/mihomoScript.js
+```
+
+- 精简版（仅包含小部分分流策略组）
+
+```txt
+https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/Script.js
 ```
 
 |                                                                                   |
 | --------------------------------------------------------------------------------- |
 | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/import.webp) |
 
-### 通过复制代码导入
+#### 通过复制代码导入
 
 部分代理客户端不支持链接导入，可以点击以下链接后复制脚本完整代码再导入到代理客户端
 
-点击此链接即可查看脚本代码 ---> [mihomoScript.js](/Script/mihomoScript.js)
+点击以下链接即可查看脚本代码
 
 ## 本地测试工具
 
@@ -36,19 +56,19 @@ npm install
 npm run process-config -- input.yaml output.yaml
 ```
 
-也可以临时覆盖 DNS 开关，方便检查 `nameserver-policy` 合并结果：
-
-```powershell
-npm run process-config -- input.yaml output.yaml --dns-overwrite true
-```
-
 ## 脚本说明
 
-- 仅适用于使用 [mihomo 内核](https://github.com/MetaCubeX/mihomo) 的代理客户端
+[Script.js（精简版）](/Script/Script.js)
 
-- 仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件
+## 配置和脚本说明
 
-- 脚本内置的DNS配置已解决DNS泄露问题（图一乐），建议不要开启代理软件的DNS覆写
+- 仅适用于使用 [mihomo 内核](https://github.com/MetaCubeX/mihomo/tree/Alpha) 的代理客户端
+
+- 脚本仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件
+
+- 全量版脚本内策略组、节点组均支持自定义是否启用（默认启用）
+
+- 内置的DNS配置已解决DNS泄露问题（图一乐），建议不要开启代理软件的DNS覆写
 
 - 若需要保留订阅原始 DNS 配置，可在脚本中将 `dnsOverwriteEnable` 设为 `false`
 
@@ -62,11 +82,9 @@ npm run process-config -- input.yaml output.yaml --dns-overwrite true
   - 高倍率节点（倍率 ≥2）
   - 低倍率节点（倍率 ≤0.5）
 
-- 脚本内策略组、节点组均支持自定义是否启用（默认启用）
-
 ## 内置策略组
 
-> - _若不需要某个分流策略组，可在脚本中将对应开关设为 `false`_
+> - _若不需要某个分流策略组，可在脚本中将 `ruleOptionsEnable` 对应值设为 `false`_
 
 - `默认代理`
 - `自动选择`
@@ -90,11 +108,12 @@ npm run process-config -- input.yaml output.yaml --dns-overwrite true
 - `Netflix`
 - `广告拦截`
 - `直连` （可自定义IP优先级，建议使用 `IPv4优先`，防止出现一些问题）
+- `漏网之鱼`
 
 ## 内置节点组
 
 > - _所有组均为手动选择（select），内部包含对应的自动选择策略组和负载均衡策略组_
-> - _若不需要某个节点组，可在脚本中将对应开关设为 `false`_
+> - _若不需要某个节点组，可在脚本中将 `regionDefinitionsEnable` 对应值设为 `false`_
 > - _若机场订阅中不存在对应节点组的节点，则该节点组不会显示_
 > - _未匹配节点组或未启用节点组的节点，将统一归类至 「其他节点」_
 

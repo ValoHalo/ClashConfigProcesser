@@ -33,8 +33,8 @@ const ruleOptionsEnable = {
   netflix: false, // Netflix视频服务
   adblock: true, // 广告拦截
   onedrive: true, // OneDrive进程，包括PC和移动端相关进程
-  dlsite: true, // DLsite，后续可能会拓展到其他日本平台，因为老日非常喜欢锁IP
-  hentai: false,
+  dlsite: true, // 日本平台，因为老日非常喜欢锁IP
+  hentai: true,
 };
 
 /**

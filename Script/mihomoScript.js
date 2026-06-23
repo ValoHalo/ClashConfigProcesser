@@ -1,12 +1,12 @@
 /**
  * mihomo配置覆写脚本（全量版）
- * 作者：AIsouler
+ * 原作者：AIsouler
  * 原仓库：https://github.com/AIsouler/MyClash
- * 脚本链接：https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/mihomoScript.js
+ * 原版脚本链接：https://raw.githubusercontent.com/AIsouler/MyClash/refs/heads/main/Script/mihomoScript.js
  * 友情推荐，非常好用、省电且内存占用低的代理软件：https://github.com/appshubcc/Bettbox
  */
 
-// 本修改脚本链接：https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modified/Script/mihomoScript.js
+// 本修改版脚本链接：https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/refs/heads/modified/Script/mihomoScript.js
 
 /**
  * 分流规则配置，会自动生成对应的策略组
@@ -66,7 +66,7 @@ const excludeFilterEnable = true;
  * true = 使用脚本内置 DNS 配置
  * false = 保留订阅原始 DNS 配置
  */
-// const dnsOverwriteEnable = true;
+const dnsOverwriteEnable = true;
 
 // 定义全局排除节点的正则表达式，用于排除非地区的信息节点
 const excludeFilter =
@@ -832,17 +832,32 @@ function main(config) {
   // 读取订阅中的 DNS 配置，保留订阅中的 proxy-server-nameserver 和 proxy-server-nameserver-policy
   // 用以解决部分机场使用私有 DNS 导致无法解析节点的问题
   const originalDns = config.dns || {};
+  const isPlainObject = (value) =>
+    value && typeof value === 'object' && !Array.isArray(value);
 
   // 过滤 proxy-server-nameserver 中常见的公共 DNS
   const commonDnsRegex =
     /(223\.5\.5\.5|223\.6\.6\.6|119\.29\.29\.29|114\.114\.114\.114|180\.76\.76\.76|1\.1\.1\.1|1\.0\.0\.1|8\.8\.8\.8|8\.8\.4\.4|alidns|doh\.pub|dot\.pub|dns\.baidu|dns\.google|cloudflare)/i;
 
-  const originalProxyServerNameserver = (
-    originalDns['proxy-server-nameserver'] || []
-  ).filter((dns) => !commonDnsRegex.test(String(dns)));
+  const originalProxyServerNameserver = Array.isArray(
+    originalDns['proxy-server-nameserver'],
+  )
+    ? originalDns['proxy-server-nameserver'].filter(
+        (dns) => !commonDnsRegex.test(String(dns)),
+      )
+    : [];
 
-  const originalProxyServerNameserverPolicy =
-    originalDns['proxy-server-nameserver-policy'] || {};
+  const originalNameserverPolicy = isPlainObject(
+    originalDns['nameserver-policy'],
+  )
+    ? originalDns['nameserver-policy']
+    : {};
+
+  const originalProxyServerNameserverPolicy = isPlainObject(
+    originalDns['proxy-server-nameserver-policy'],
+  )
+    ? originalDns['proxy-server-nameserver-policy']
+    : {};
 
   // 国内外 DNS 定义
   const chinaDNS = [
@@ -854,11 +869,12 @@ function main(config) {
     'https://dns.google/dns-query#默认代理',
     'https://v.recipes/dns-cn#DIRECT',
     'https://v.recipes/dns-ecs#DIRECT',
-    'https://1.1.1.1/dns-query#默认代理',
-    'https://8.8.8.8/dns-query#默认代理',
+    'https://v.recipes/dns-query#DIRECT',
+    'tls://[2606:4700:4700::1111]#DIRECT',
+    'tls://[2001:4860:4860::64]#DIRECT'
   ];
 
-  newConfig['dns'] = {
+  const builtInDns = {
     enable: true,
     ipv6: true,
     listen: ':1053',
@@ -867,22 +883,23 @@ function main(config) {
     'use-system-hosts': true,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-range-v6': 'fc00::/18',
+    'fake-ip-range6': 'fc00::/18',
     'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter'],
     'proxy-server-nameserver': [...originalProxyServerNameserver, ...chinaDNS],
+    // 部分订阅把节点域名专用解析器写在 nameserver-policy 中。
     'proxy-server-nameserver-policy': {
+      ...originalNameserverPolicy,
       ...originalProxyServerNameserverPolicy,
     },
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: [...foreignDNS],
     'nameserver-policy': {
+      ...originalNameserverPolicy,
       'rule-set:cn': [...chinaDNS],
     },
     'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
     // 'prefer-h3': true,
     // 'respect-rules': false,
-    // 'use-hosts': true,
-    // 'use-system-hosts': true,
     // 'direct-nameserver-follow-policy': false,
     'fallback': [
       ...foreignDNS,
@@ -893,6 +910,8 @@ function main(config) {
       'ipcidr': ['240.0.0.0/4', '127.0.0.1/8'] 
     }
   };
+
+  newConfig['dns'] = dnsOverwriteEnable ? builtInDns : originalDns;
 
   // hosts 配置
   newConfig['hosts'] = {
@@ -909,7 +928,7 @@ function main(config) {
     '+.mcdn.bilivideo.cn': ['0.0.0.0'],
   };
 
-  newConfig['allow-lan'] = true;
+  // newConfig['allow-lan'] = true;
   newConfig['ipv6'] = true;
   newConfig['log-level'] = 'info';
   newConfig['bind-address'] = '*';
@@ -919,10 +938,10 @@ function main(config) {
   newConfig['keep-alive-interval'] = 60;
   newConfig['find-process-mode'] = 'strict';
 
-  newConfig['external-controller'] = '[::]:9090';
-  newConfig['external-ui'] = 'ui';
-  newConfig['external-ui-url'] =
-    'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
+  // newConfig['external-controller'] = '[::]:9090';
+  // newConfig['external-ui'] = 'ui';
+  // newConfig['external-ui-url'] =
+  //   'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
 
   newConfig['profile'] = {
     'store-selected': true,

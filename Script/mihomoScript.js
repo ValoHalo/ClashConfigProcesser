@@ -362,7 +362,8 @@ const serviceConfigs = [
   {
     key: 'onedrive',
     name: 'OneDrive',
-    proxyMode: 'directfirst',
+    direct: true,
+    defaultSelected: '直连',
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/OneDrive.png',
     rules: [
       'PROCESS-NAME,OneDrive.exe,OneDrive',
@@ -610,8 +611,8 @@ const serviceConfigs = [
     providers: {
       adblockmihomo: {
         ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.mrs',
-        path: './ruleset/adblockmihomolite.mrs',
+        url: 'https://fastly.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs',
+        path: './ruleset/adblockmihomo.mrs',
         'path-in-bundle': 'geo/geosite/category-ads-all.mrs',
       },
     },

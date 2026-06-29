@@ -162,7 +162,7 @@ const baseRuleProviders = {
     ...ruleProviderCommonDomain,
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs',
     path: './ruleset/fakeip-filter.mrs',
-    'path-in-bundle': 'geo/geosite/fakeip-filter.mrs',
+    'path-in-bundle': 'geo/geosite/private.mrs',
   },
   epicgames: {
     ...ruleProviderCommonDomain,
@@ -233,7 +233,7 @@ const baseRuleProviders = {
   cloudflare_cn: {
     ...ruleProviderCommonDomain,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cloudflare@cn.mrs',
-    path: './ruleset/cloudflare_cn.mrs',
+    path: './ruleset/cloudflare@cn.mrs',
     'path-in-bundle': 'geo/geosite/cloudflare@cn.mrs',
   },
   apple_cn: {
@@ -321,15 +321,13 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png',
-    rules: [
-      'AND,((NETWORK,UDP),(DST-PORT,443),(RULE-SET,youtube)),REJECT', // 阻断 YouTube UDP 流量
-      'RULE-SET,youtube,YouTube',
-    ],
+    rules: ['RULE-SET,youtube,YouTube'],
   },
   {
     key: 'googlefcm',
     name: 'FCM',
-    proxyMode: 'directfirst',
+    direct: true,
+    defaultSelected: '直连',
     providers: {
       googlefcm: {
         ...ruleProviderCommonDomain,
@@ -408,7 +406,7 @@ const serviceConfigs = [
   {
     key: 'microsoft',
     name: 'Microsoft',
-    proxyMode: 'direct',
+    direct: true,
     providers: {
       microsoft: {
         ...ruleProviderCommonDomain,
@@ -423,7 +421,7 @@ const serviceConfigs = [
   {
     key: 'apple',
     name: 'Apple',
-    proxyMode: 'direct',
+    direct: true,
     providers: {
       apple: {
         ...ruleProviderCommonDomain,
@@ -453,10 +451,7 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png',
-    rules: [
-      'RULE-SET,telegram,Telegram',
-      'RULE-SET,telegram_ip,Telegram,no-resolve',
-    ],
+    rules: ['RULE-SET,telegram,Telegram', 'RULE-SET,telegram_ip,Telegram,no-resolve'],
   },
   {
     key: 'cloudflare',
@@ -476,10 +471,7 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cloudflare.png',
-    rules: [
-      'RULE-SET,cloudflare,Cloudflare',
-      'RULE-SET,cloudflare_ip,Cloudflare,no-resolve',
-    ],
+    rules: ['RULE-SET,cloudflare,Cloudflare', 'RULE-SET,cloudflare_ip,Cloudflare,no-resolve'],
   },
   {
     key: 'pixiv',
@@ -531,10 +523,7 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Twitter.png',
-    rules: [
-      'RULE-SET,twitter,Twitter',
-      'RULE-SET,twitter_ip,Twitter,no-resolve',
-    ],
+    rules: ['RULE-SET,twitter,Twitter', 'RULE-SET,twitter_ip,Twitter,no-resolve'],
   },
   {
     key: 'instagram',
@@ -553,7 +542,7 @@ const serviceConfigs = [
   {
     key: 'emby',
     name: 'Emby',
-    proxyMode: 'direct',
+    direct: true,
     providers: {
       emby: {
         ...ruleProviderCommonDomain,
@@ -568,7 +557,7 @@ const serviceConfigs = [
   {
     key: 'spotify',
     name: 'Spotify',
-    proxyMode: 'direct',
+    direct: true,
     providers: {
       spotify: {
         ...ruleProviderCommonDomain,
@@ -612,15 +601,12 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Netflix.png',
-    rules: [
-      'RULE-SET,netflix,Netflix',
-      'RULE-SET,netflix_ip,Netflix,no-resolve',
-    ],
+    rules: ['RULE-SET,netflix,Netflix', 'RULE-SET,netflix_ip,Netflix,no-resolve'],
   },
   {
     key: 'adblock',
     name: '广告拦截',
-    proxyMode: 'reject',
+    reject: true,
     providers: {
       adblockmihomo: {
         ...ruleProviderCommonDomain,
@@ -635,12 +621,12 @@ const serviceConfigs = [
 ];
 // 定义创建地区策略组的函数
 function createRegionGroup(name, icon, proxies) {
-  const autoTestName = `${name}-自动选择`;
+  const urlTestName = `${name}-自动选择`;
   const loadBalanceName = `${name}-负载均衡`;
   return [
     {
       ...urlTestBaseOption,
-      name: autoTestName,
+      name: urlTestName,
       proxies,
     },
     {
@@ -652,7 +638,7 @@ function createRegionGroup(name, icon, proxies) {
       ...selectBaseOption,
       name,
       icon,
-      proxies: [...proxies, autoTestName, loadBalanceName],
+      proxies: [...proxies, urlTestName, loadBalanceName],
     },
   ];
 }
@@ -664,35 +650,27 @@ function main(config) {
 
   // 排除匹配到的节点
   if (excludeFilterEnable && Array.isArray(config.proxies)) {
-    config.proxies = config.proxies.filter(
-      (proxy) => !excludeFilter.test(proxy.name),
-    );
+    config.proxies = config.proxies.filter((proxy) => !excludeFilter.test(proxy.name));
   }
 
   // 获取节点列表
   const proxies = config.proxies || [];
 
   // 验证节点列表是否存在代理节点
-  const allDirectOrReject = proxies.every((p) => {
+  const isAllDirectOrReject = proxies.every((p) => {
     const type = p.type?.toLowerCase();
     return type === 'direct' || type === 'reject';
   });
 
-  if (!proxies.length || allDirectOrReject) {
-    throw new Error(
-      '配置文件中未找到任何代理节点，请使用机场提供的配置文件进行覆写',
-    );
+  if (!proxies.length || isAllDirectOrReject) {
+    throw new Error('配置文件中未找到任何代理节点，请使用机场提供的配置文件进行覆写');
   }
 
   // --- 构建地区组和倍率组 ---
 
   // 节点分类
-  const enabledDefinitions = regionDefinitions.filter(
-    (r) => regionDefinitionsEnable[r.name] === true,
-  );
-  const regionGroups = Object.fromEntries(
-    enabledDefinitions.map((r) => [r.name, { ...r, proxies: [] }]),
-  );
+  const enabledDefinitions = regionDefinitions.filter((r) => regionDefinitionsEnable[r.name] === true);
+  const regionGroups = Object.fromEntries(enabledDefinitions.map((r) => [r.name, { ...r, proxies: [] }]));
   const otherProxies = [];
 
   for (const proxy of proxies) {
@@ -718,9 +696,7 @@ function main(config) {
   // 构建地区策略组
   const generatedRegionGroups = enabledDefinitions
     .filter((r) => regionGroups[r.name].proxies.length > 0)
-    .flatMap((r) =>
-      createRegionGroup(r.name, r.icon, regionGroups[r.name].proxies),
-    );
+    .flatMap((r) => createRegionGroup(r.name, r.icon, regionGroups[r.name].proxies));
 
   if (otherProxies.length > 0) {
     generatedRegionGroups.push(
@@ -739,23 +715,7 @@ function main(config) {
   const finalRuleProviders = { ...baseRuleProviders };
 
   // 筛选类型为 select 的地区策略组
-  const groupNamesOfSelect = generatedRegionGroups
-    .filter((g) => g.type === 'select')
-    .map((g) => g.name);
-
-  // 定义分流策略组对应的策略组成员
-  const proxyModes = {
-    default: ['默认代理', '自动选择', '负载均衡', ...groupNamesOfSelect],
-    direct: ['默认代理', '直连', '自动选择', '负载均衡', ...groupNamesOfSelect],
-    directfirst: [
-      '直连',
-      '默认代理',
-      '自动选择',
-      '负载均衡',
-      ...groupNamesOfSelect,
-    ],
-    reject: ['REJECT', 'REJECT-DROP', 'PASS'],
-  };
+  const groupNamesOfSelect = generatedRegionGroups.filter((g) => g.type === 'select').map((g) => g.name);
 
   // 生成基础策略组
   functionalGroups.push(
@@ -789,12 +749,17 @@ function main(config) {
       finalRuleProviders[providerName] = providerConfig;
     }
 
+    // 添加分流策略组对应的节点列表
+    const groupProxies = svc.reject
+      ? ['REJECT', 'REJECT-DROP', 'PASS']
+      : ['默认代理', '自动选择', '负载均衡', ...groupNamesOfSelect, ...(svc.direct ? ['直连'] : [])];
+
     functionalGroups.push({
       ...selectBaseOption,
       name: svc.name,
       icon: svc.icon,
       'default-selected': svc.defaultSelected,
-      proxies: [...proxyModes[svc.proxyMode || 'default']],
+      proxies: groupProxies,
     });
   }
 
@@ -819,10 +784,7 @@ function main(config) {
   const globalGroup = {
     ...selectBaseOption,
     name: 'GLOBAL',
-    proxies: [
-      ...functionalGroups.map((g) => g.name),
-      ...generatedRegionGroups.map((g) => g.name),
-    ],
+    proxies: [...functionalGroups.map((g) => g.name), ...generatedRegionGroups.map((g) => g.name)],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
   };
 
@@ -843,8 +805,8 @@ function main(config) {
     originalDns['proxy-server-nameserver'],
   )
     ? originalDns['proxy-server-nameserver'].filter(
-        (dns) => !commonDnsRegex.test(String(dns)),
-      )
+      (dns) => !commonDnsRegex.test(String(dns)),
+    )
     : [];
 
   const originalNameserverPolicy = isPlainObject(
@@ -905,9 +867,9 @@ function main(config) {
       ...foreignDNS,
     ],
     'fallback-filter': {
-      geoip: true, 
-      'geoip-code': 'CN', 
-      'ipcidr': ['240.0.0.0/4', '127.0.0.1/8'] 
+      geoip: true,
+      'geoip-code': 'CN',
+      'ipcidr': ['240.0.0.0/4', '127.0.0.1/8']
     }
   };
 
@@ -930,6 +892,7 @@ function main(config) {
 
   // newConfig['allow-lan'] = true;
   newConfig['ipv6'] = true;
+  newConfig['mode'] = 'rule';
   newConfig['log-level'] = 'info';
   newConfig['bind-address'] = '*';
   newConfig['unified-delay'] = true;
@@ -986,11 +949,7 @@ function main(config) {
     },
   ];
 
-  newConfig['proxy-groups'] = [
-    globalGroup,
-    ...functionalGroups,
-    ...generatedRegionGroups,
-  ];
+  newConfig['proxy-groups'] = [globalGroup, ...functionalGroups, ...generatedRegionGroups];
   newConfig['rule-providers'] = finalRuleProviders;
 
   newConfig['rules'] = [

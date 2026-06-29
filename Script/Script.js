@@ -99,7 +99,7 @@ const baseRuleProviders = {
     ...ruleProviderCommonDomain,
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs',
     path: './ruleset/fakeip-filter.mrs',
-    'path-in-bundle': 'geo/geosite/fakeip-filter.mrs',
+    'path-in-bundle': 'geo/geosite/private.mrs',
   },
   epicgames: {
     ...ruleProviderCommonDomain,
@@ -218,10 +218,7 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png',
-    rules: [
-      'RULE-SET,telegram,Telegram',
-      'RULE-SET,telegram_ip,Telegram,no-resolve',
-    ],
+    rules: ['RULE-SET,telegram,Telegram', 'RULE-SET,telegram_ip,Telegram,no-resolve'],
   },
   {
     key: 'steam',
@@ -240,7 +237,7 @@ const serviceConfigs = [
   {
     key: 'adblock',
     name: '广告拦截',
-    proxyMode: 'reject',
+    reject: true,
     providers: {
       adblockmihomolite: {
         ...ruleProviderCommonDomain,
@@ -256,18 +253,18 @@ const serviceConfigs = [
 
 // 定义创建地区策略组的函数
 function createRegionGroup(name, icon, proxies) {
-  const autoTestName = `${name}-自动选择`;
+  const urlTestName = `${name}-自动选择`;
   return [
     {
       ...urlTestBaseOption,
-      name: autoTestName,
+      name: urlTestName,
       proxies,
     },
     {
       ...selectBaseOption,
       name,
       icon,
-      proxies: [autoTestName, ...proxies],
+      proxies: [urlTestName, ...proxies],
     },
   ];
 }
@@ -279,32 +276,26 @@ function main(config) {
 
   // 排除匹配到的节点
   if (Array.isArray(config.proxies)) {
-    config.proxies = config.proxies.filter(
-      (proxy) => !excludeFilter.test(proxy.name),
-    );
+    config.proxies = config.proxies.filter((proxy) => !excludeFilter.test(proxy.name));
   }
 
   // 获取节点列表
   const proxies = config.proxies || [];
 
   // 验证节点列表是否存在代理节点
-  const allDirectOrReject = proxies.every((p) => {
+  const isAllDirectOrReject = proxies.every((p) => {
     const type = p.type?.toLowerCase();
     return type === 'direct' || type === 'reject';
   });
 
-  if (!proxies.length || allDirectOrReject) {
-    throw new Error(
-      '配置文件中未找到任何代理节点，请使用机场提供的配置文件进行覆写',
-    );
+  if (!proxies.length || isAllDirectOrReject) {
+    throw new Error('配置文件中未找到任何代理节点，请使用机场提供的配置文件进行覆写');
   }
 
   // --- 构建地区组和倍率组 ---
 
   // 节点分类
-  const regionGroups = Object.fromEntries(
-    regionDefinitions.map((r) => [r.name, { ...r, proxies: [] }]),
-  );
+  const regionGroups = Object.fromEntries(regionDefinitions.map((r) => [r.name, { ...r, proxies: [] }]));
   const otherProxies = [];
 
   for (const proxy of proxies) {
@@ -330,9 +321,7 @@ function main(config) {
   // 构建地区策略组
   const generatedRegionGroups = regionDefinitions
     .filter((r) => regionGroups[r.name].proxies.length > 0)
-    .flatMap((r) =>
-      createRegionGroup(r.name, r.icon, regionGroups[r.name].proxies),
-    );
+    .flatMap((r) => createRegionGroup(r.name, r.icon, regionGroups[r.name].proxies));
 
   if (otherProxies.length > 0) {
     generatedRegionGroups.push(
@@ -351,16 +340,7 @@ function main(config) {
   const finalRuleProviders = { ...baseRuleProviders };
 
   // 筛选类型为 select 的地区策略组
-  const groupNamesOfSelect = generatedRegionGroups
-    .filter((g) => g.type === 'select')
-    .map((g) => g.name);
-
-  // 定义分流策略组对应的策略组成员
-  const proxyModes = {
-    default: ['默认代理', ...groupNamesOfSelect],
-    direct: ['默认代理', '直连', ...groupNamesOfSelect],
-    reject: ['REJECT', 'REJECT-DROP', 'PASS'],
-  };
+  const groupNamesOfSelect = generatedRegionGroups.filter((g) => g.type === 'select').map((g) => g.name);
 
   // 生成代理策略组
   functionalGroups.push({
@@ -380,12 +360,17 @@ function main(config) {
       finalRuleProviders[providerName] = providerConfig;
     }
 
+    // 添加分流策略组对应的节点列表
+    const groupProxies = svc.reject
+      ? ['REJECT', 'REJECT-DROP', 'PASS']
+      : ['默认代理', ...groupNamesOfSelect, ...(svc.direct ? ['直连'] : [])];
+
     functionalGroups.push({
       ...selectBaseOption,
       name: svc.name,
       icon: svc.icon,
       'default-selected': svc.defaultSelected,
-      proxies: [...proxyModes[svc.proxyMode || 'default']],
+      proxies: groupProxies,
     });
   }
 
@@ -410,10 +395,7 @@ function main(config) {
   const globalGroup = {
     ...selectBaseOption,
     name: 'GLOBAL',
-    proxies: [
-      ...functionalGroups.map((g) => g.name),
-      ...generatedRegionGroups.map((g) => g.name),
-    ],
+    proxies: [...functionalGroups.map((g) => g.name), ...generatedRegionGroups.map((g) => g.name)],
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
   };
 
@@ -428,22 +410,15 @@ function main(config) {
   const commonDnsRegex =
     /(223\.5\.5\.5|223\.6\.6\.6|119\.29\.29\.29|114\.114\.114\.114|180\.76\.76\.76|1\.1\.1\.1|1\.0\.0\.1|8\.8\.8\.8|8\.8\.4\.4|alidns|doh\.pub|dot\.pub|dns\.baidu|dns\.google|cloudflare)/i;
 
-  const originalProxyServerNameserver = (
-    originalDns['proxy-server-nameserver'] || []
-  ).filter((dns) => !commonDnsRegex.test(String(dns)));
+  const originalProxyServerNameserver = (originalDns['proxy-server-nameserver'] || []).filter(
+    (dns) => !commonDnsRegex.test(String(dns)),
+  );
 
-  const originalProxyServerNameserverPolicy =
-    originalDns['proxy-server-nameserver-policy'] || {};
+  const originalProxyServerNameserverPolicy = originalDns['proxy-server-nameserver-policy'] || {};
 
   // 国内外 DNS 定义
-  const chinaDNS = [
-    'https://dns.alidns.com/dns-query#DIRECT',
-    'https://doh.pub/dns-query#DIRECT',
-  ];
-  const foreignDNS = [
-    'https://dns.cloudflare.com/dns-query#默认代理',
-    'https://dns.google/dns-query#默认代理',
-  ];
+  const chinaDNS = ['https://dns.alidns.com/dns-query#DIRECT', 'https://doh.pub/dns-query#DIRECT'];
+  const foreignDNS = ['https://dns.cloudflare.com/dns-query#默认代理', 'https://dns.google/dns-query#默认代理'];
 
   newConfig['dns'] = {
     enable: true,
@@ -485,6 +460,7 @@ function main(config) {
 
   newConfig['allow-lan'] = true;
   newConfig['ipv6'] = true;
+  newConfig['mode'] = 'rule';
   newConfig['log-level'] = 'info';
   newConfig['bind-address'] = '*';
   newConfig['unified-delay'] = true;
@@ -495,8 +471,7 @@ function main(config) {
 
   newConfig['external-controller'] = '[::]:9090';
   newConfig['external-ui'] = 'ui';
-  newConfig['external-ui-url'] =
-    'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
+  newConfig['external-ui-url'] = 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip';
 
   newConfig['profile'] = {
     'store-selected': true,
@@ -541,11 +516,7 @@ function main(config) {
     },
   ];
 
-  newConfig['proxy-groups'] = [
-    globalGroup,
-    ...functionalGroups,
-    ...generatedRegionGroups,
-  ];
+  newConfig['proxy-groups'] = [globalGroup, ...functionalGroups, ...generatedRegionGroups];
   newConfig['rule-providers'] = finalRuleProviders;
 
   newConfig['rules'] = [

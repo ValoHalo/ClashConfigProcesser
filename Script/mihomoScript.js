@@ -22,13 +22,13 @@ const ruleOptionsEnable = {
   Apple: true, // Apple服务
   Telegram: true, // Telegram通讯软件
   Steam: true, // Steam游戏平台
-  TikTok: true, // TikTok视频平台
+  TikTok: false, // TikTok视频平台
   Twitter: true, // Twitter社交平台
   Emby: false, // Emby媒体服务
   PikPak: true, // PikPak网盘服务
   Spotify: false, // Spotify音乐服务
   AdBlock: true, // 广告拦截
-  Onedrive: true, // OneDrive进程，包括PC和移动端相关进程
+  OneDrive: true, // OneDrive进程，包括PC和移动端相关进程
   DLsite: true, // 日本平台，因为老日非常喜欢锁IP
   Hentai: true,
 };
@@ -40,13 +40,6 @@ const ruleOptionsEnable = {
  * false = 禁用
  */
 const excludeHighRateProxiesEnable = false;
-
-/**
- * DNS覆写配置
- * true = 使用脚本内置 DNS 配置
- * false = 保留订阅原始 DNS 配置
- */
-const dnsOverwriteEnable = true;
 
 // 定义全局排除节点的正则表达式，用于排除非地区的信息节点
 const excludeFilter =
@@ -429,20 +422,6 @@ const serviceConfigs = [
     ],
   },
   {
-    key: 'github',
-    name: 'GitHub',
-    providers: {
-      github: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs',
-        path: './ruleset/github.mrs',
-        'path-in-bundle': 'geo/geosite/github.mrs',
-      },
-    },
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png',
-    rules: ['RULE-SET,github,GitHub'],
-  },
-  {
     key: 'microsoft',
     name: 'Microsoft',
     direct: true,
@@ -724,14 +703,19 @@ function main(config) {
     const groupProxies = svc.reject
       ? ['REJECT', 'REJECT-DROP', 'PASS']
       : ['默认代理', '手动选择', '自动选择', '负载均衡', ...groupNamesOfSelect, ...(svc.direct ? ['直连'] : [])];
+    const defaultSelected = groupProxies.includes(svc.defaultSelected)
+      ? svc.defaultSelected
+      : svc.defaultSelected !== undefined
+        ? '默认代理'
+        : undefined;
 
     functionalGroups.push({
       ...selectBaseOption,
       name: svc.name,
       icon: svc.icon,
       proxies: groupProxies,
-      ...(svc.defaultSelected !== undefined && {
-        'default-selected': svc.defaultSelected,
+      ...(defaultSelected !== undefined && {
+        'default-selected': defaultSelected,
       }),
     });
   }
@@ -846,12 +830,14 @@ function main(config) {
     }
   };
 
-  newConfig['dns'] = dnsOverwriteEnable ? builtInDns : originalDns;
+  newConfig['dns'] = builtInDns;
 
   // hosts 配置
   // 收集所有节点域名，并保留订阅中用于解析这些节点的 hosts 记录。
   const proxyDomains = new Set(
-    filteredProxies.map((proxy) => proxy.server.toLowerCase()),
+    filteredProxies
+      .filter((proxy) => typeof proxy.server === 'string')
+      .map((proxy) => proxy.server.toLowerCase()),
   );
   const originalHosts = isPlainObject(config.hosts) ? config.hosts : {};
   const proxyHosts = {};

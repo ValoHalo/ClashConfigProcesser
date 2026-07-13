@@ -11,7 +11,7 @@ Mihomo（Clash Meta）配置文件和覆写脚本，分别提供全量版和精�
 > - _注意⚠️：该脚本仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件_
 > - _脚本已解决机场使用私有DNS导致无法解析节点域名的问题_
 > - _地区策略组根据是否匹配到节点来生成_
-> - _全量版脚本内的分流策略组均支持自定义是否启用（默认启用），支持自定义是否过滤高倍率节点（默认禁用）_
+> - _全量版脚本内的分流策略组均支持自定义是否启用，支持自定义是否过滤高倍率节点（默认禁用）_
 
 ### 使用方法（脚本）
 
@@ -86,8 +86,6 @@ https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.
 
 - 内置的DNS配置已解决DNS泄露问题，DNS配置和路由规则是配套的，建议不要开启代理软件的DNS覆写或随意修改
 
-- 若需要保留订阅原始 DNS 配置，可在脚本中将 `dnsOverwriteEnable` 设为 `false`
-
 - 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata，减少内存占用
 
 - 规则以 `domain` 与 `ipcidr` 行为为主，相比 `classical` 查询效率更高
@@ -111,6 +109,9 @@ https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.
 - `Media` （YouTube+Instagram+Netflix+HBO+Twitch+Disney+NicoNico+BBC+Pornhub）
 - `FCM`
 - `Google`
+- `OneDrive`
+- `DLsite`
+- `Hentai`
 - `Microsoft`
 - `Apple`
 - `Telegram`

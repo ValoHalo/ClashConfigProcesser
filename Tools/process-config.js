@@ -13,12 +13,10 @@ function printHelp() {
 
 Options:
   --script <path>              Override script path. Default: Script/mihomoScript.js
-  --dns-overwrite <true|false> Override dnsOverwriteEnable for this run only
   -h, --help                   Show this help
 
 Examples:
   node Tools/process-config.js input.yaml output.yaml
-  node Tools/process-config.js input.yaml output.yaml --dns-overwrite true
   npm run process-config -- input.yaml output.yaml
 `);
 }
@@ -31,18 +29,11 @@ function takeValue(args, index, optionName) {
   return value;
 }
 
-function parseBoolean(value, optionName) {
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  throw new Error(`${optionName} must be true or false`);
-}
-
 function parseArgs(argv) {
   const options = {
     inputPath: null,
     outputPath: null,
     scriptPath: path.join(rootDir, 'Script', 'mihomoScript.js'),
-    dnsOverwrite: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -61,23 +52,6 @@ function parseArgs(argv) {
 
     if (arg.startsWith('--script=')) {
       options.scriptPath = arg.slice('--script='.length);
-      continue;
-    }
-
-    if (arg === '--dns-overwrite') {
-      options.dnsOverwrite = parseBoolean(
-        takeValue(argv, i, '--dns-overwrite'),
-        '--dns-overwrite',
-      );
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--dns-overwrite=')) {
-      options.dnsOverwrite = parseBoolean(
-        arg.slice('--dns-overwrite='.length),
-        '--dns-overwrite',
-      );
       continue;
     }
 
@@ -126,24 +100,8 @@ function writeOutput(outputPath, output) {
   console.error(`Processed config written to ${resolvedOutputPath}`);
 }
 
-function replaceBooleanConst(source, constName, value) {
-  const pattern = new RegExp(
-    `const\\s+${constName}\\s*=\\s*(?:true|false)\\s*;`,
-  );
-
-  if (!pattern.test(source)) {
-    throw new Error(`Cannot find boolean const: ${constName}`);
-  }
-
-  return source.replace(pattern, `const ${constName} = ${value};`);
-}
-
-function loadMain(scriptPath, dnsOverwrite) {
-  let source = fs.readFileSync(scriptPath, 'utf8');
-
-  if (dnsOverwrite !== null) {
-    source = replaceBooleanConst(source, 'dnsOverwriteEnable', dnsOverwrite);
-  }
+function loadMain(scriptPath) {
+  const source = fs.readFileSync(scriptPath, 'utf8');
 
   const context = {
     console,
@@ -176,7 +134,7 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   const inputSource = readInput(options.inputPath);
   const config = parseConfig(inputSource);
-  const processConfig = loadMain(options.scriptPath, options.dnsOverwrite);
+  const processConfig = loadMain(options.scriptPath);
   const processedConfig = processConfig(config);
   const output = YAML.stringify(processedConfig, { lineWidth: 0 });
 

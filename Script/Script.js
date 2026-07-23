@@ -56,7 +56,8 @@ const regionDefinitions = [
   },
   {
     name: '低倍率节点',
-    regex: /^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|下载|低倍)/,
+    regex:
+      /^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|(?<!\d)0(?:\.0+)?\s*(?:倍|[*×xX✕✖⨉])|[*×xX✕✖⨉]\s*0(?:\.0+)?(?!\d)|下载|低倍)/u,
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Available_1.png',
   },
   {

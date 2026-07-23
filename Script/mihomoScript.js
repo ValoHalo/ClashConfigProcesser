@@ -93,7 +93,8 @@ const regionDefinitions = [
   },
   {
     name: '低倍率节点',
-    regex: /^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|下载|低倍)/,
+    regex:
+      /^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|(?<!\d)0(?:\.0+)?\s*(?:倍|[*×xX✕✖⨉])|[*×xX✕✖⨉]\s*0(?:\.0+)?(?!\d)|下载|低倍)/u,
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Available_1.png',
   },
   {
@@ -576,6 +577,7 @@ const serviceConfigs = [
 // 定义创建地区策略组的函数
 function createRegionGroup(name, icon, proxies) {
   const urlTestName = `${name}-自动选择`;
+  const loadBalanceName = `${name}-负载均衡`;
   return [
     {
       ...urlTestBaseOption,
@@ -583,10 +585,15 @@ function createRegionGroup(name, icon, proxies) {
       proxies,
     },
     {
+      ...loadBalanceBaseOption,
+      name: loadBalanceName,
+      proxies,
+    },
+    {
       ...selectBaseOption,
       name,
       icon,
-      proxies: [urlTestName, ...proxies],
+      proxies: [urlTestName, loadBalanceName, ...proxies],
     },
   ];
 }

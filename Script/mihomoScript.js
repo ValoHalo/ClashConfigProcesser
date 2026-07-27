@@ -57,9 +57,6 @@ const rules = [
   'DOMAIN,international-gfe.download.nvidia.com,直连',
   'DOMAIN-SUFFIX,hdslb.com,直连',
 
-  // 禁用国外 QUIC 流量
-  'AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_additional),(RULE-SET,cn_ip,no-resolve)))))),REJECT',
-
   'RULE-SET,github,默认代理',
 ];
 
@@ -143,12 +140,6 @@ const ruleProviderCommonIpcidr = {
 // 定义基础 Rule Providers
 const baseRuleProviders = {
   // --- 直连规则集 ---
-  ehentai: {
-    ...ruleProviderCommonDomain,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/ehentai.mrs',
-    path: './ruleset/ehentai.mrs',
-    'path-in-bundle': 'geo/geosite/ehentai.mrs',
-  },
   private: {
     ...ruleProviderCommonDomain,
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs',
@@ -172,18 +163,6 @@ const baseRuleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/epicgames.mrs',
     path: './ruleset/epicgames.mrs',
     'path-in-bundle': 'geo/geosite/epicgames.mrs',
-  },
-  dlsite: {
-    ...ruleProviderCommonDomain,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/dlsite.mrs',
-    path: './ruleset/dlsite.mrs',
-    'path-in-bundle': 'geo/geosite/dlsite.mrs',
-  },
-  steam_cn: {
-    ...ruleProviderCommonDomain,
-    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs',
-    path: './ruleset/steam_cn.mrs',
-    'path-in-bundle': 'geo/geosite/steam@cn.mrs',
   },
   nvidia_cn: {
     ...ruleProviderCommonDomain,
@@ -238,12 +217,6 @@ const baseRuleProviders = {
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs',
     path: './ruleset/fakeip-filter.mrs',
     'path-in-bundle': 'geo/geosite/private.mrs',
-  },
-  cn_additional: {
-    ...ruleProviderCommonDomain,
-    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs',
-    path: './ruleset/cn-additional-list.mrs',
-    'path-in-bundle': 'geo/geosite/cn.mrs',
   },
   cn: {
     ...ruleProviderCommonDomain,
@@ -437,8 +410,16 @@ const serviceConfigs = [
   {
     key: 'dlsite', // DLsite会根据用户IP匹配支付方式和隐藏部分作品，因此最好支持单独选择配置文件
     name: 'DLsite',
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure/blob/master/IconSet/Available_Alt.png', // FlC不支持图标显示，随便弄一个图标占位
-    rules: ['RULE-SET,dlsite,DLsite',],
+    providers: {
+      dlsite: {
+        ...ruleProviderCommonDomain,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/dlsite.mrs',
+        path: './ruleset/dlsite.mrs',
+        'path-in-bundle': 'geo/geosite/dlsite.mrs',
+      },
+    },
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Available_Alt.png', // FlC不支持图标显示，随便弄一个图标占位
+    rules: ['RULE-SET,dlsite,DLsite'],
   },
   // {
   //   key: 'hentai',
@@ -722,6 +703,13 @@ function main(config) {
     throw new Error('配置文件中未找到任何代理节点，请使用机场提供的配置文件进行覆写');
   }
 
+  // 收集节点域名，用于恢复订阅中仅供节点解析使用的 DNS 策略和 hosts。
+  const proxyDomains = new Set(
+    filteredProxies
+      .filter((proxy) => typeof proxy.server === 'string')
+      .map((proxy) => proxy.server.toLowerCase()),
+  );
+
   // --- 构建地区组和倍率组 ---
 
   // 节点分类
@@ -956,6 +944,29 @@ function main(config) {
     ? originalDns['proxy-server-nameserver-policy']
     : {};
 
+  // 部分订阅把节点域名专用解析器写在 nameserver-policy 中。
+  // 仅将实际匹配节点域名的条目复制到 proxy-server-nameserver-policy，
+  // 避免把订阅中的普通域名解析策略一并用于节点解析。
+  const proxyServerNameserverPolicy = {};
+  for (const policy of [originalNameserverPolicy, originalProxyServerNameserverPolicy]) {
+    for (const [domain, dns] of Object.entries(policy)) {
+      if (matchDomainPattern(domain, proxyDomains)) {
+        proxyServerNameserverPolicy[domain] = dns;
+      }
+    }
+  }
+
+  // proxy-server-nameserver-policy 仅在 proxy-server-nameserver 非空时生效。
+  // 如果订阅只在 policy 中提供节点解析器，则使用这些已匹配的机场 DNS 激活 policy，
+  // 不添加脚本内置或公共 DNS 作为节点解析兜底。
+  const nameserversFromPolicy = Object.values(proxyServerNameserverPolicy)
+    .flatMap((dns) => (Array.isArray(dns) ? dns : [dns]))
+    .filter((dns) => typeof dns === 'string' && dns.length > 0);
+  const proxyServerNameservers =
+    originalProxyServerNameserver.length > 0
+      ? originalProxyServerNameserver
+      : [...new Set(nameserversFromPolicy)];
+
   // 国内外 DNS 定义
   const chinaDNS = [
     'https://dns.alidns.com/dns-query#DIRECT',
@@ -965,10 +976,6 @@ function main(config) {
     'https://dns.cloudflare.com/dns-query#默认代理',
     'https://dns.google/dns-query#默认代理',
     'https://v.recipes/dns-cn#DIRECT',
-    'https://v.recipes/dns-ecs#DIRECT',
-    'https://v.recipes/dns-query#DIRECT',
-    'tls://[2606:4700:4700::1111]#DIRECT',
-    'tls://[2001:4860:4860::64]#DIRECT'
   ];
 
   const builtInDns = {
@@ -979,43 +986,29 @@ function main(config) {
     'use-system-hosts': true,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
-    'fake-ip-range6': 'fc00::/18',
     'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter'],
-    'proxy-server-nameserver': [...originalProxyServerNameserver, ...chinaDNS],
-    // 部分订阅把节点域名专用解析器写在 nameserver-policy 中。
-    'proxy-server-nameserver-policy': {
-      ...originalNameserverPolicy,
-      ...originalProxyServerNameserverPolicy,
-    },
+    ...(proxyServerNameservers.length > 0 && {
+      'proxy-server-nameserver': proxyServerNameservers,
+    }),
+    ...(Object.keys(proxyServerNameserverPolicy).length > 0 && {
+      'proxy-server-nameserver-policy': proxyServerNameserverPolicy,
+    }),
     'default-nameserver': ['223.5.5.5', '119.29.29.29'],
     nameserver: [...foreignDNS],
     'nameserver-policy': {
       ...originalNameserverPolicy,
       'rule-set:cn': [...chinaDNS],
     },
-    'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
+    'direct-nameserver': [...chinaDNS],
     // 'prefer-h3': true,
     // 'respect-rules': false,
     // 'direct-nameserver-follow-policy': false,
-    'fallback': [
-      ...foreignDNS,
-    ],
-    'fallback-filter': {
-      geoip: true,
-      'geoip-code': 'CN',
-      'ipcidr': ['240.0.0.0/4', '127.0.0.1/8']
-    }
   };
 
   newConfig['dns'] = builtInDns;
 
   // hosts 配置
-  // 收集所有节点域名，并保留订阅中用于解析这些节点的 hosts 记录。
-  const proxyDomains = new Set(
-    filteredProxies
-      .filter((proxy) => typeof proxy.server === 'string')
-      .map((proxy) => proxy.server.toLowerCase()),
-  );
+  // 保留订阅中用于解析节点域名的 hosts 记录。
   const originalHosts = isPlainObject(config.hosts) ? config.hosts : {};
   const proxyHosts = {};
   for (const [domain, value] of Object.entries(originalHosts)) {

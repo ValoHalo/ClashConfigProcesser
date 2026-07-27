@@ -45,8 +45,17 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/
 
 ### 使用方法（配置）
 
-- [mihomoScript.js（全量版）](/Script/mihomoScript.js)
-- [Script.js（精简版遗留脚本）](/Script/Script.js)
+- [mihomoConfig.yaml（全量版）](/Config/mihomoConfig.yaml)
+
+```txt
+https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfig.yaml
+```
+
+- [mihomoConfigLite.yaml（精简版）](/Config/mihomoConfigLite.yaml)（仅包含少量分流策略组）
+
+```txt
+https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.yaml
+```
 
 ## 本地测试工具
 
@@ -63,19 +72,10 @@ npm run process-config -- input.yaml output.yaml
 npm run process-config -- input.yaml output.yaml --script Script/Script.js
 ```
 
-## 脚本说明
+运行语法检查和脱敏的配置生成回归测试：
 
-- [mihomoScript.js（全量版）](/Script/mihomoScript.js)
-- [Script.js（精简版遗留脚本）](/Script/Script.js)
-
-```txt
-https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfig.yaml
-```
-
-- [mihomoConfigLite.yaml（精简版）](/Config/mihomoConfigLite.yaml)（仅包含少量分流策略组）
-
-```txt
-https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.yaml
+```powershell
+npm run check
 ```
 
 ## 说明
@@ -111,7 +111,6 @@ https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.
 - `Google`
 - `OneDrive`
 - `DLsite`
-- `Hentai`
 - `Microsoft`
 - `Apple`
 - `Telegram`
@@ -147,7 +146,7 @@ https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.
 |                                                                                  |                                                                                  |                                                                                  |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_1.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_2.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_3.webp) |
-| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_4.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_6.webp) |
+| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_4.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) |                                                                                  |
 
 ## 致谢
 

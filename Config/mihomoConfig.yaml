@@ -12,13 +12,7 @@ proxy_providers_common:
     type: http,
     interval: 86400,
     proxy: DIRECT,
-    health-check:
-      {
-        enable: true,
-        url: https://g.cn/generate_204,
-        interval: 600,
-        lazy: true,
-      },
+    health-check: { enable: true, url: https://g.cn/generate_204, interval: 600, lazy: true },
   }
 
 # 全局过滤节点
@@ -73,16 +67,8 @@ profile:
   store-fake-ip: true
 
 # 国内外 DNS 定义
-chinaDNS:
-  &chinaDNS [
-    'https://dns.alidns.com/dns-query#DIRECT',
-    'https://doh.pub/dns-query#DIRECT',
-  ]
-foreignDNS:
-  &foreignDNS [
-    'https://dns.cloudflare.com/dns-query#默认代理',
-    'https://dns.google/dns-query#默认代理',
-  ]
+chinaDNS: &chinaDNS ['https://dns.alidns.com/dns-query#DIRECT', 'https://doh.pub/dns-query#DIRECT']
+foreignDNS: &foreignDNS ['https://dns.cloudflare.com/dns-query#默认代理', 'https://dns.google/dns-query#默认代理']
 
 dns:
   enable: true
@@ -134,20 +120,8 @@ tun:
 
 # Rule Provider 通用配置
 rule_providers_common:
-  rule_providers_domain:
-    &rule_providers_domain {
-      type: http,
-      format: mrs,
-      interval: 86400,
-      behavior: domain,
-    }
-  rule_providers_ip:
-    &rule_providers_ip {
-      type: http,
-      format: mrs,
-      interval: 86400,
-      behavior: ipcidr,
-    }
+  rule_providers_domain: &rule_providers_domain { type: http, format: mrs, interval: 86400, behavior: domain }
+  rule_providers_ip: &rule_providers_ip { type: http, format: mrs, interval: 86400, behavior: ipcidr }
 
 # 定义 Rule Providers
 rule-providers:
@@ -188,11 +162,11 @@ rule-providers:
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft@cn.mrs'
     path: './ruleset/microsoft@cn.mrs'
     path-in-bundle: 'geo/geosite/microsoft@cn.mrs'
-  cn_additional:
+  geolocation-cn:
     <<: *rule_providers_domain
-    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs'
-    path: './ruleset/cn-additional-list.mrs'
-    path-in-bundle: 'geo/geosite/cn.mrs'
+    url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-cn.mrs'
+    path: './ruleset/geolocation-cn.mrs'
+    path-in-bundle: 'geo/geosite/geolocation-cn.mrs'
   cn_ip:
     <<: *rule_providers_ip
     url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cn.mrs'
@@ -354,6 +328,11 @@ rule-providers:
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/fakeip-filter.mrs'
     path: './ruleset/fakeip-filter.mrs'
     path-in-bundle: 'geo/geosite/private.mrs'
+  cn_additional:
+    <<: *rule_providers_domain
+    url: 'https://static-file-global.353355.xyz/rules/cn-additional-list.mrs'
+    path: './ruleset/cn-additional-list.mrs'
+    path-in-bundle: 'geo/geosite/cn.mrs'
   cn:
     <<: *rule_providers_domain
     url: 'https://fastly.jsdelivr.net/gh/wwqgtxx/clash-rules@release/direct.mrs'
@@ -452,23 +431,19 @@ proxies_common:
 
 # 地区过滤器正则表达式定义
 group_filter:
-  HK_filter: &HK_filter { filter: '🇭🇰|香港|HK|[Hh]ong\s*[Kk]ong' }
-  JP_filter: &JP_filter { filter: '🇯🇵|日本|JP|[Jj]apan' }
-  US_filter:
-    &US_filter { filter: '🇺🇸|美国|US|[Aa]merica|[Uu]nited\s*[Ss]tates' }
-  SG_filter: &SG_filter { filter: '🇸🇬|新加坡|狮城|SG|[Ss]ingapore' }
-  TW_filter: &TW_filter { filter: '🇹🇼|台湾|TW|[Tt]aiwan' }
-  low_filter:
-    &low_filter {
-      filter: '^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|(?<!\d)0(?:\.0+)?\s*(?:倍|[*×xX✕✖⨉])|[*×xX✕✖⨉]\s*0(?:\.0+)?(?!\d)|下载|低倍)',
-    }
+  HK_filter: &HK_filter { filter: '(?i)(🇭🇰|香港|(?<![A-Za-z])HK(?![A-Za-z])|hong\s*kong)' }
+  JP_filter: &JP_filter { filter: '(?i)(🇯🇵|日本|(?<![A-Za-z])JP(?![A-Za-z])|japan)' }
+  US_filter: &US_filter { filter: '(?i)(🇺🇸|美国|(?<![A-Za-z])US(?![A-Za-z])|america|united\s*states)' }
+  SG_filter: &SG_filter { filter: '(?i)(🇸🇬|新加坡|狮城|(?<![A-Za-z])SG(?![A-Za-z])|singapore)' }
+  TW_filter: &TW_filter { filter: '(?i)(🇹🇼|台湾|(?<![A-Za-z])TW(?![A-Za-z])|taiwan)' }
+  low_filter: &low_filter { filter: '^(?!.*(?:剩|期|客户端|软件)).*(?:(?<!\d)0\.[0-5]|下载|低倍)' }
   high_filter:
     &high_filter {
       filter: '(?u)(?:[*×xX✕✖⨉]\s*(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?\s*(?:倍|[*×xX✕✖⨉]))',
     }
   exclude_filter:
     &exclude_filter {
-      exclude-filter: '港|HK|🇭🇰|日本|JP|🇯🇵|美|US|🇺🇸|新加坡|SG|🇸🇬|台湾|TW|🇹🇼',
+      exclude-filter: '(?i)(🇭🇰|香港|(?<![A-Za-z])HK(?![A-Za-z])|hong\s*kong|🇯🇵|日本|(?<![A-Za-z])JP(?![A-Za-z])|japan|🇺🇸|美国|(?<![A-Za-z])US(?![A-Za-z])|america|united\s*states|🇸🇬|新加坡|狮城|(?<![A-Za-z])SG(?![A-Za-z])|singapore|🇹🇼|台湾|(?<![A-Za-z])TW(?![A-Za-z])|taiwan)',
       exclude-type: 'DIRECT',
     }
 
@@ -576,7 +551,7 @@ proxy-groups:
 
   - name: '直连'
     <<: *group_common_select
-    proxies: ['🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先', '🇨🇳 直连 | 双栈']
+    proxies: ['🇨🇳 直连 | 双栈', '🇨🇳 直连 | IPv4优先', '🇨🇳 直连 | IPv6优先']
     url: 'https://connectivitycheck.platform.hicloud.com/generate_204'
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/China_Map.png'
 
@@ -648,9 +623,6 @@ proxy-groups:
 # --- 路由规则 (Rules) ---
 
 rules:
-  # 禁用国外 QUIC 流量
-  - AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_additional),(RULE-SET,cn_ip,no-resolve)))))),REJECT
-
   # 私有网络直连
   - RULE-SET,private,直连
   - RULE-SET,private_ip,直连,no-resolve
@@ -663,6 +635,10 @@ rules:
   - RULE-SET,microsoft_cn,直连
   - DOMAIN,fsend.cn,直连
   - DOMAIN,international-gfe.download.nvidia.com,直连
+  - DOMAIN-SUFFIX,hdslb.com,直连
+
+  # 禁用国外 QUIC 流量
+  - AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_additional),(RULE-SET,cn_ip,no-resolve)))))),REJECT
 
   # 广告拦截
   - RULE-SET,adblockmihomolite,AdBlock
@@ -702,6 +678,6 @@ rules:
 
   # 兜底规则
   - RULE-SET,gfw,默认代理
-  - RULE-SET,cn_additional,直连
+  - RULE-SET,geolocation-cn,直连
   - RULE-SET,cn_ip,直连
   - MATCH,漏网之鱼

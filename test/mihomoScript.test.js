@@ -144,3 +144,57 @@ test('does not override QUIC routing decisions', () => {
 
   assert.equal(output.rules.some((rule) => rule.includes('DST-PORT,443')), false);
 });
+
+test('keeps every default selection inside its generated group', () => {
+  const output = processConfig({
+    proxies: [createProxy('HK Test', 'hk.example.com')],
+  });
+
+  for (const group of output['proxy-groups']) {
+    if (group['default-selected'] !== undefined) {
+      assert.equal(
+        group.proxies.includes(group['default-selected']),
+        true,
+        `${group.name} selects missing proxy ${group['default-selected']}`,
+      );
+    }
+  }
+});
+
+test('normalizes proxy flags without creating duplicate names', () => {
+  const output = processConfig({
+    proxies: [
+      createProxy('HK 01', 'hk01.example.com'),
+      createProxy('🇭🇰 HK 01', 'hk02.example.com'),
+      createProxy('HK 02', 'hk03.example.com'),
+    ],
+  });
+  const proxyNames = output.proxies.slice(0, 3).map((proxy) => proxy.name);
+
+  assert.deepEqual(proxyNames, ['HK 01', '🇭🇰 HK 01', '🇭🇰 HK 02']);
+  assert.equal(new Set(proxyNames).size, proxyNames.length);
+});
+
+test('preserves personal groups without enabling listener or controller exposure', () => {
+  const output = processConfig({
+    proxies: [createProxy('HK Test', 'hk.example.com')],
+  });
+  const groupNames = output['proxy-groups'].map((group) => group.name);
+  const groupsByName = new Map(output['proxy-groups'].map((group) => [group.name, group]));
+
+  assert.equal(groupNames.includes('OneDrive'), true);
+  assert.equal(groupNames.includes('DLsite'), true);
+  assert.equal(groupsByName.get('OneDrive').type, 'select');
+  assert.equal(groupsByName.get('DLsite').type, 'select');
+  for (const disabledGroup of ['TikTok', 'Emby', 'Spotify', 'Crypto']) {
+    assert.equal(groupNames.includes(disabledGroup), false, `${disabledGroup} should remain disabled`);
+  }
+  assert.equal(groupNames.includes('香港-负载均衡'), true);
+  assert.equal(Object.hasOwn(output['rule-providers'], 'adblockmihomo'), true);
+  assert.equal(Object.hasOwn(output['rule-providers'], 'adblockmihomolite'), false);
+  assert.deepEqual(output.hosts['+.h2.smtcdns.net'], ['0.0.0.0']);
+
+  for (const key of ['mixed-port', 'allow-lan', 'external-controller', 'external-ui', 'external-ui-url']) {
+    assert.equal(Object.hasOwn(output, key), false, `${key} should not be generated`);
+  }
+});

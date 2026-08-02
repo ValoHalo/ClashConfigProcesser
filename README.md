@@ -1,17 +1,43 @@
 # ClashConfigProcesser
 
-Mihomo（Clash Meta）配置文件和覆写脚本，分别提供全量版和精简版，无DNS泄露，内置多项分流策略、地区策略，实现全局排除节点、自动识别节点倍率功能，解决机场使用私有DNS导致无法解析节点域名的问题
+基于 [Mihomo](https://github.com/MetaCubeX/mihomo/tree/Alpha) 的配置文件与覆写脚本，提供全量版和精简版。
 
-友情推荐，非常好用、省电且内存占用低的代理软件：[Bettbox](https://github.com/appshubcc/Bettbox)
+主要特性：
+
+- 内置多种分流策略与地区策略
+- 自动排除无效地区节点
+- 自动识别节点倍率并分类
+- 保留与实际节点域名匹配的机场专用 DNS、hosts，解决节点域名无法解析的问题
+- 国内规则集定向直连 DoH；默认解析使用代理 DoH，并保留一个直连 `v.recipes` 解析器。实际泄露边界仍取决于客户端、系统和路由设置
+- 支持 Bettbox 图形化配置管理
+
+友情推荐：
+[Bettbox](https://github.com/appshubcc/Bettbox) —— 一款轻量、省电、低内存占用的代理客户端。
+
+**覆写脚本已适配 Bettbox，可通过图形界面自定义启用策略组及配置选项，获得更灵活的使用体验，具体效果请查看下方效果预览图。**
+
+---
 
 ## 覆写脚本
 
+### 注意事项
+
 > [!IMPORTANT]
 >
-> - _注意⚠️：该脚本仅适用于覆写机场提供的配置文件，请勿用于覆写自己编写的配置文件_
-> - _脚本已解决机场使用私有DNS导致无法解析节点域名的问题_
-> - _地区策略组根据是否匹配到节点来生成_
-> - _全量版脚本内的分流策略组均支持自定义是否启用，支持自定义是否过滤高倍率节点（默认禁用）_
+> ⚠️该脚本仅用于覆写机场提供的配置文件，请勿用于覆写自行编写的配置
+
+### 脚本功能
+
+- ✅ 解决机场私有 DNS 或节点域名 hosts 映射导致的节点解析问题
+- ✅ 根据节点匹配情况动态生成地区策略组
+- ✅ 支持自定义是否生成地区自动选择策略组
+- ✅ 支持自定义是否生成地区负载均衡策略组
+- ✅ 支持自定义是否隐藏地区手动选择策略组
+- ✅ 支持自定义是否将全部节点加入分流策略组
+- ✅ 支持自定义是否过滤高倍率节点
+- ✅ 支持自定义是否过滤非地区节点
+- ✅ 支持自定义是否屏蔽国外 QUIC 流量
+- ✅ 全量修改版不主动开启 LAN、外部控制器或 Web UI
 
 ### 使用方法（脚本）
 
@@ -35,15 +61,18 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/
 
 ## 配置文件
 
-> [!IMPORTANT]
->
-> - _配置文件实现的效果和脚本基本一致_
-> - _不支持自定义是否启用策略组，不支持自定义是否过滤高倍率节点_
-> - _无法像脚本那样实现不生成未匹配到节点的策略组_
-> - _对于使用私有DNS的机场，需要手动将私有DNS填入到配置文件中_
-> - _未匹配到节点的策略组将回退到 REJECT_
+配置文件与脚本实现效果基本一致，但功能存在限制。
+
+### 限制
+
+- 不支持自定义启用/禁用配置项
+- 无法根据节点匹配情况动态生成策略组
+- 使用私有 DNS 或 hosts 节点域名映射的机场需要手动写入配置中
+- 未匹配地区的策略组将回退至 REJECT
 
 ### 使用方法（配置）
+
+复制以下任意一个链接或者复制完整代码后导入代理客户端
 
 - [mihomoConfig.yaml（全量版）](/Config/mihomoConfig.yaml)
 
@@ -78,13 +107,13 @@ npm run process-config -- input.yaml output.yaml --script Script/Script.js
 npm run check
 ```
 
-## 说明
+## 功能说明
 
 - 仅适用于使用 [mihomo 内核](https://github.com/MetaCubeX/mihomo/tree/Alpha) 的代理客户端
 
-- 全量版和精简版仅有分流策略组数量差异，其他基本一致，若不需要很多分流策略组，可使用精简版
+- 全量修改版包含个人 DNS、策略组和网络暴露约束；精简版及两个 Config 文件保持上游版本
 
-- 内置的DNS配置已解决DNS泄露问题（在 Windows 上需要关闭系统的智能多宿主解析功能或在代理软件中开启 [严格路由](https://wiki.metacubex.one/config/inbound/tun/#strict-route)），DNS配置和路由规则是配套的，建议不要开启代理软件的DNS覆写或随意修改
+- DNS 配置和路由规则配套使用；在 Windows 上仍建议关闭智能多宿主解析，或在代理软件中开启 [严格路由](https://wiki.metacubex.one/config/inbound/tun/#strict-route)。本项目的回归测试验证配置生成语义，不等同于所有客户端和系统环境下的零泄露保证
 
 - 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata，减少内存占用
 
@@ -98,8 +127,7 @@ npm run check
 
 ## 内置策略组
 
-> - _若不需要某个分流策略组，可在脚本中将 `ruleOptionsEnable` 对应值设为 `false`_
-> - _以下内容以全量版脚本为准_
+> - 若不需要某个分流策略组，可在脚本中将 `ruleOptionsEnable` 对应值设为 `false`
 
 - `默认代理`
 - `手动选择`
@@ -120,6 +148,7 @@ npm run check
 - `Emby`
 - `PikPak`
 - `Spotify`
+- `Crypto`
 - `EHentai`
 - `AdBlock`
 - `直连` （可自定义IP优先级）
@@ -127,8 +156,8 @@ npm run check
 
 ## 内置节点组
 
-> - _所有组均为手动选择（select），内部包含对应的自动选择和负载均衡策略组_
-> - _未匹配到地区组的节点节点将归类至 「其他节点」_
+> - 所有组均为手动选择（select），内部可包含对应的自动选择和负载均衡策略组
+> - 未匹配到地区组的节点将归类至 「其他节点」
 
 - `香港`
 - `日本`
@@ -143,10 +172,10 @@ npm run check
 
 - 客户端： [Bettbox](https://github.com/appshubcc/Bettbox)
 
-|                                                                                  |                                                                                  |                                                                                  |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_1.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_2.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_3.webp) |
-| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_4.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) |                                                                                  |
+|                                                                                  |                                                                                  |                                                                                  |                                                                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_1.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_2.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_3.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_4.webp) |
+| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_6.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_7.webp) |                                                                                  |
 
 ## 致谢
 

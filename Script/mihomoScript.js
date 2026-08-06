@@ -279,6 +279,8 @@ const selectBaseOption = {
 const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
+  // 使用 Mihomo 支持的最低阈值，尽快触发强制健康检查并重选节点。
+  'max-failed-times': 1,
   tolerance: 50,
   'exclude-type': 'DIRECT',
   icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
@@ -816,6 +818,22 @@ function getMatchedRegions(proxyName) {
 
 // ---节点过滤、重命名及验证---
 
+// Compatibility helper from upstream. Existing local normalization remains unchanged.
+function fixDialerProxy(proxy, renameMap, normalizedProxyNames) {
+  const target = proxy['dialer-proxy'];
+  if (!target) return proxy;
+
+  if (renameMap.has(target)) {
+    return { ...proxy, 'dialer-proxy': renameMap.get(target) };
+  }
+
+  if (normalizedProxyNames.has(target)) return proxy;
+
+  const copy = { ...proxy };
+  delete copy['dialer-proxy'];
+  return copy;
+}
+
 function filterAndNormalizeProxies(config) {
   // 清空缓存，避免上次运行残留的旧名称
   proxyRegionCache.clear();
@@ -1065,6 +1083,44 @@ const foreignDNS = [
   'https://dns.google/dns-query#默认代理',
   'https://v.recipes/dns-cn#DIRECT',
 ];
+
+function hostSpecificity(pattern) {
+  if (pattern.startsWith('+.')) return 2;
+  if (pattern.startsWith('.')) return 1;
+  if (pattern.includes('*')) return 0;
+  return 3;
+}
+
+// Compatibility helper from upstream. The local DNS builder intentionally does not call it.
+function applyHostsToProxies(proxies, hosts, originalProxyDomains) {
+  if (!hosts || typeof hosts !== 'object') return proxies;
+
+  const hostEntries = Object.entries(hosts)
+    .filter(
+      ([domain, value]) =>
+        matchDomainPattern(domain, originalProxyDomains) &&
+        ((typeof value === 'string' && value.length > 0) || (Array.isArray(value) && value.length > 0)),
+    )
+    .sort((a, b) => hostSpecificity(b[0]) - hostSpecificity(a[0]));
+
+  if (hostEntries.length === 0) return proxies;
+
+  const resolve = (server) => {
+    const domains = new Set([server.toLowerCase()]);
+    for (const [domain, value] of hostEntries) {
+      if (!matchDomainPattern(domain, domains)) continue;
+      const candidate = Array.isArray(value) ? value[0] : value;
+      if (typeof candidate === 'string' && candidate.length > 0) return candidate;
+    }
+    return server;
+  };
+
+  return proxies.map((proxy) => {
+    if (typeof proxy.server !== 'string') return proxy;
+    const server = resolve(proxy.server);
+    return server === proxy.server ? proxy : { ...proxy, server };
+  });
+}
 
 function buildDnsAndHostsConfig(config, filteredProxies) {
   // 读取订阅中的 DNS 配置，保留订阅中的私有 DNS

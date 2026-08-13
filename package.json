@@ -5,8 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "process-config": "node Tools/process-config.js",
-    "test": "node --test",
-    "check": "node --check Script/mihomoScript.js && node --check Script/Script.js && node --check Tools/process-config.js && node --test"
+    "test": "node Test/run-tests.js --node",
+    "check": "node --check Script/mihomoScript.js && node --check Script/Script.js && node --check Tools/process-config.js && npm test"
   },
   "dependencies": {
     "yaml": "^2.9.0"

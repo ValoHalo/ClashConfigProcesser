@@ -7,8 +7,8 @@
 - 内置多种分流策略与地区策略
 - 自动排除无效地区节点
 - 自动识别节点倍率并分类
-- 保留与实际节点域名匹配的机场专用 DNS、hosts，解决节点域名无法解析的问题
-- 国内规则集定向直连 DoH；默认解析使用代理 DoH，并保留一个直连 `v.recipes` 解析器。实际泄露边界仍取决于客户端、系统和路由设置
+- 从匹配节点域名的服务商 `nameserver-policy` 提取私有 DoH，用于节点域名解析
+- 国内规则集定向使用直连 DoH，默认解析使用代理 DoH；实际泄露情况仍取决于客户端、系统和路由设置
 - 支持 Bettbox 图形化配置管理
 
 友情推荐：
@@ -40,19 +40,21 @@
 - ✅ 支持自定义是否过滤高倍率节点
 - ✅ 支持自定义是否过滤非地区节点
 - ✅ 支持自定义是否屏蔽国外 QUIC 流量
+- ✅ 支持在脚本中配置自定义节点（自动生成“自建节点”策略组，与订阅节点重名时自动添加“自建-”前缀）
+- ✅ 支持链式代理（将自定义节点作为落地节点，经“链式中转”策略组通过订阅节点中转；启用后自动为自定义节点添加 `dialer-proxy`）
 - ✅ 全量修改版不主动开启 LAN、外部控制器或 Web UI
 
 ### 使用方法（脚本）
 
 复制以下任意一个链接或者复制完整代码后按如图所示步骤导入到代理客户端，以 [Bettbox](https://github.com/appshubcc/Bettbox) 为例
 
-- [mihomoScript.js（全量版）](/Script/mihomoScript.js)
+- [mihomoScript.js（全量版）](/Script/mihomoScript.js)，复制下面这个链接使用👇👇👇
 
 ```txt
 https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/mihomoScript.js
 ```
 
-- [Script.js（精简版）](/Script/Script.js) （仅包含少量分流策略组）
+- [Script.js（精简版）](/Script/Script.js)，仅包含少量分流策略组，复制下面这个链接使用👇👇👇
 
 ```txt
 https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/Script.js
@@ -77,13 +79,13 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/
 
 复制以下任意一个链接或者复制完整代码后导入代理客户端
 
-- [mihomoConfig.yaml（全量版）](/Config/mihomoConfig.yaml)
+- [mihomoConfig.yaml（全量版）](/Config/mihomoConfig.yaml)，复制下面这个链接使用👇👇👇
 
 ```txt
 https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfig.yaml
 ```
 
-- [mihomoConfigLite.yaml（精简版）](/Config/mihomoConfigLite.yaml)（仅包含少量分流策略组）
+- [mihomoConfigLite.yaml（精简版）](/Config/mihomoConfigLite.yaml)，仅包含少量分流策略组，复制下面这个链接使用👇👇👇
 
 ```txt
 https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.yaml
@@ -91,14 +93,14 @@ https://raw.githubusercontent.com/AIsouler/MyClash/main/Config/mihomoConfigLite.
 
 ## 本地测试工具
 
-安装依赖后，可以用测试工具把原始订阅 YAML 处理成脚本覆写后的最终配置：
+安装依赖后，可以把原始订阅 YAML 处理成脚本覆写后的最终配置：
 
 ```powershell
 npm install
 npm run process-config -- input.yaml output.yaml
 ```
 
-默认使用全量版脚本，也可以手动指定其他脚本：
+默认使用全量版脚本，也可以指定精简版：
 
 ```powershell
 npm run process-config -- input.yaml output.yaml --script Script/Script.js
@@ -114,9 +116,9 @@ npm run check
 
 - 仅适用于使用 [mihomo 内核](https://github.com/MetaCubeX/mihomo/tree/Alpha) 的代理客户端
 
-- 全量修改版包含个人 DNS、策略组和网络暴露约束；精简版及两个 Config 文件保持上游版本
+- 全量修改版包含个人 DNS、服务策略组和网络暴露设置；精简版及静态配置主要跟随上游
 
-- DNS 配置和路由规则配套使用；在 Windows 上仍建议关闭智能多宿主解析，或在代理软件中开启 [严格路由](https://wiki.metacubex.one/config/inbound/tun/#strict-route)。本项目的回归测试验证配置生成语义，不等同于所有客户端和系统环境下的零泄露保证
+- DNS 配置和路由规则配套使用；在 Windows 上仍建议关闭智能多宿主解析，或在代理软件中开启 [严格路由](https://wiki.metacubex.one/config/inbound/tun/#strict-route)。回归测试只验证配置生成行为，不代表所有环境均不会发生 DNS 泄露
 
 - 规则采用 `rule-set` 模式，按需添加规则集，告别臃肿的 geodata，减少内存占用
 
@@ -156,6 +158,8 @@ npm run check
 - `AdBlock`
 - `直连` （可自定义IP优先级）
 - `漏网之鱼`
+- `自建节点` （仅添加了自定义节点时生成）
+- `链式中转` （仅启用链式代理且配置自定义节点时生成）
 
 ## 内置节点组
 

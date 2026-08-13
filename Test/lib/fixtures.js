@@ -10,8 +10,10 @@ function typicalSubscription() {
     mode: 'rule',
     dns: {
       enable: true,
-      nameserver: ['223.5.5.5', 'https://private.example-dns.com/dns-query'],
-      'proxy-server-nameserver': ['8.8.8.8', '1.1.1.1'],
+      // 设置 dns.listen 且 proxy-server-nameserver 仅含一个 DNS 且包含该值，用于触发 hosts 映射改写
+      listen: '198.18.0.1:53',
+      nameserver: ['223.5.5.5', '8.8.8.8', 'https://private.example-dns.com/dns-query'],
+      'proxy-server-nameserver': ['198.18.0.1:53'],
       'proxy-server-nameserver-policy': {
         'hk1.example.com': 'https://private.example-dns.com/dns-query',
         '+.example.com': ['https://other-dns.com/dns-query'],
@@ -143,18 +145,6 @@ function emptySubscription() {
   return { proxies: [] };
 }
 
-/** 仅包含会被脚本按 type 过滤的节点（direct / reject / rematch） */
-function filteredByTypeSubscription() {
-  return {
-    proxies: [
-      { name: 'DIRECT', type: 'direct' },
-      { name: 'REJECT', type: 'reject' },
-      { name: 'REJECT-DROP', type: 'reject' },
-      { name: 'REMATCH', type: 'rematch' },
-    ],
-  };
-}
-
 /** 全部为会被过滤的节点（信息节点 + rematch 类型），开启过滤时会全部被剔除 */
 function allFilteredSubscription() {
   return {
@@ -170,6 +160,8 @@ function allFilteredSubscription() {
 function hostsMappedSubscription() {
   return {
     dns: {
+      listen: '198.18.0.1:53',
+      'proxy-server-nameserver': ['198.18.0.1:53'],
       'fake-ip-filter': ['+.example-apt.com', '+.unrelated-filter.com'],
     },
     hosts: {
@@ -190,42 +182,10 @@ function hostsMappedSubscription() {
   };
 }
 
-/** hosts 通配/多值映射场景：精确条目优先于通配条目，数组取值取首个元素 */
-function hostsWildcardSubscription() {
-  return {
-    hosts: {
-      '+.premium.example.com': ['9.9.9.9', '9.9.9.8'],
-      'hk1.premium.example.com': '1.1.1.1',
-      'www.unrelated.com': '10.0.0.9',
-    },
-    proxies: [
-      {
-        name: '🇭🇰 香港 A',
-        type: 'ss',
-        server: 'hk1.premium.example.com',
-        port: 443,
-        cipher: 'aes-256-gcm',
-        password: 'x',
-      },
-      {
-        name: '🇯🇵 日本 B',
-        type: 'ss',
-        server: 'jp2.premium.example.com',
-        port: 443,
-        cipher: 'aes-256-gcm',
-        password: 'x',
-      },
-      { name: '🇺🇸 美国 C', type: 'ss', server: 'us1.other.com', port: 443, cipher: 'aes-256-gcm', password: 'x' },
-    ],
-  };
-}
-
 module.exports = {
   typicalSubscription,
   minimalSubscription,
   emptySubscription,
-  filteredByTypeSubscription,
   allFilteredSubscription,
   hostsMappedSubscription,
-  hostsWildcardSubscription,
 };

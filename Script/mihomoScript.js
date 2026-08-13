@@ -287,11 +287,11 @@ const baseRuleProviders = {
 
 // 策略组公共配置
 const groupBaseOption = {
-  interval: 600,
+  interval: 400,
   timeout: 3000,
   url: 'https://g.cn/generate_204',
   lazy: true,
-  'max-failed-times': 3,
+  'max-failed-times': 2,
   'empty-fallback': 'REJECT',
 };
 
@@ -306,7 +306,6 @@ const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
   // 使用 Mihomo 支持的最低阈值，尽快触发强制健康检查并重选节点。
-  'max-failed-times': 1,
   tolerance: 50,
   'exclude-type': 'DIRECT',
   icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',

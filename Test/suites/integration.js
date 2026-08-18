@@ -166,7 +166,7 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
     }
   });
   if (meta.full) {
-    h.test('无匹配节点 policy 时不生成节点专用 DNS', () => {
+    h.test('无匹配节点 policy 时使用国内 DNS 解析节点域名', () => {
       const cfg = fx.minimalSubscription();
       cfg.dns = {
         nameserver: ['https://ordinary.example-dns.com/dns-query'],
@@ -175,7 +175,10 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
         },
       };
       const out = api.main(cfg);
-      h.assert(!('proxy-server-nameserver' in out.dns), '不应添加公共 DNS 或普通 nameserver 作为节点 DNS');
+      h.assertDeep(out.dns['proxy-server-nameserver'], [
+        'https://dns.alidns.com/dns-query#DIRECT',
+        'https://doh.pub/dns-query#DIRECT',
+      ]);
       h.assert(!('proxy-server-nameserver-policy' in out.dns), '不应生成无关节点 policy');
     });
   }

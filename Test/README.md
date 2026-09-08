@@ -56,6 +56,7 @@ npm --prefix Test install
 - DNS 与 hosts（全量版从匹配节点域名的 policy 提取私有 DNS，不提升普通 nameserver；节点域名 policy/fake-ip-filter 保留；hosts 映射改写 server）
 - 配置选项开关（过滤高倍率 / 自动选择组 / 地区负载均衡组 / 隐藏手动组 / 分流组添加所有节点 / QUIC 及 cn_additional 规则集 / 关闭分流组）
 - 全量版个人设置（OneDrive、DLsite、服务默认开关、URL 测试阈值及不主动生成 LAN/controller/UI 字段）
+- 精简版 DNS 与 hosts（`proxy-server-nameserver` 固定使用公共 DoH；私有 DNS 在无节点专属 policy 时合并写入节点域名 policy、有专属 policy 时优先保留、公共 DNS 过滤；节点域名 policy/fake-ip-filter 保留（节点域名仅取映射后的 server 且排除 IP 类型）、hosts 映射改写 server；仅当 `proxy-server-nameserver` 有且仅有一个条目且包含 `listen` 值，或条目含 `127.0.0.1` 且 `listen` 含 `0.0.0.0` 时才触发改写，未命中时跳过改写）
 - 自定义节点：未配置时不生成自定义节点组；配置后生成自定义节点组（链式代理启用时名“链式落地”，否则“自建节点”）、重名加“自建-”前缀、不参与 hosts 改写与 DNS 域名处理、默认代理/GLOBAL/手动选择包含自定义节点
 - 异常场景（空节点、仅 DIRECT/REJECT/rematch 类型、全部可过滤节点 → 抛错）
 
@@ -75,6 +76,7 @@ Test/
 │   └── quickjs-check.js    # QuickJS 兼容性验证逻辑（语法解析/顶层执行/main 调用）
 └── suites/
     ├── unit.js             # 纯函数单元测试
+    ├── full-dns.js         # 全量版私有 DNS 与 hosts 集成测试
     └── integration.js      # main() 集成测试
 ```
 

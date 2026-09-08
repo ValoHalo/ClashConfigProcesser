@@ -17,9 +17,12 @@ const EXPORT_SUFFIX = `
   matchDomainPattern,
   applyHostsToProxies,
   stripDnsSuffix,
+  simplifyDomainPolicy,
   getMatchedRegions,
   normalizeProxyName,
   fixDialerProxy,
+  isIpAddress,
+  chinaDohDNS,
   ruleOptionsEnable
 };
 // 仅全量版存在 buildCustomizeGroups，精简版无此函数时保持导出不报错

@@ -37,9 +37,11 @@
 - ✅ 支持自定义是否隐藏地区手动选择策略组
 - ✅ 支持自定义是否生成 高/低 倍率节点组
 - ✅ 支持自定义是否将全部节点加入分流策略组
+- ✅ 支持自定义是否过滤低倍率节点
 - ✅ 支持自定义是否过滤高倍率节点
 - ✅ 支持自定义是否过滤非地区节点
 - ✅ 支持自定义是否屏蔽国外 QUIC 流量
+- ✅ 支持自定义是否将订阅节点统一为 IPv4/IPv6 优先（同时开启时不生效）
 - ✅ 支持在脚本中配置自定义节点（自动生成“自建节点”策略组，与订阅节点重名时自动添加“自建-”前缀）
 - ✅ 支持链式代理（将自定义节点作为落地节点，经“链式中转”策略组通过订阅节点中转；启用后自动为自定义节点添加 `dialer-proxy`）
 - ✅ 全量修改版不主动开启 LAN、外部控制器或 Web UI
@@ -138,17 +140,19 @@ npm run check
 - `手动选择`
 - `自动选择`
 - `负载均衡`
-- `AI`
-- `Media` （YouTube+Instagram+Netflix+HBO+Twitch+Disney+NicoNico+BBC+Pornhub）
 - `FCM`
+- `YouTube`
 - `Google`
 - `OneDrive`
 - `DLsite`
+- `AI`
 - `Microsoft`
 - `Apple`
 - `Telegram`
 - `Steam`
 - `TikTok`
+- `Instagram`
+- `Netflix`
 - `Twitter`
 - `Emby`
 - `PikPak`
@@ -156,9 +160,9 @@ npm run check
 - `Crypto`
 - `EHentai`
 - `AdBlock`
-- `直连` （可自定义IP优先级）
+- `直连` （可自定义 `双栈/IPv4优先/IPv6优先/仅IPv4/仅IPv6`）
 - `漏网之鱼`
-- `自建节点` （仅添加了自定义节点时生成）
+- `自建节点/链式落地` （仅添加了自定义节点时生成）
 - `链式中转` （仅启用链式代理且配置自定义节点时生成）
 
 ## 内置节点组
@@ -182,7 +186,7 @@ npm run check
 |                                                                                  |                                                                                  |                                                                                  |                                                                                  |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_1.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_2.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_3.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_4.webp) |
-| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_6.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_7.webp) |                                                                                  |
+| ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_5.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_6.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_7.webp) | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/IMG_8.webp) |
 
 ## 致谢
 
@@ -192,9 +196,7 @@ npm run check
 
 - [YiXuanZX/rules](https://github.com/YiXuanZX/rules)
 
-- [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
-
-- [wwqgtxx/clash-rules](https://github.com/wwqgtxx/clash-rules)
+- [appshubcc/bett-rules](https://github.com/appshubcc/bett-rules)
 
 - [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters)
 

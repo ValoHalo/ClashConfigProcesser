@@ -47,6 +47,7 @@ const ruleOptionsEnable = {
   DLsite: true, // 日本平台，会根据用户IP调整支付方式和部分内容
 
   // 以下为非分流策略配置
+  本地直连规则: false, // 从 ./ruleset/local-direct.yaml 读取本地直连规则
   生成地区自动选择组: true, // 是否生成地区自动选择策略组
   生成地区负载均衡组: true, // 是否为各地区生成负载均衡策略组
   隐藏地区手动选择组: false, // 是否隐藏地区手动选择策略组
@@ -321,7 +322,6 @@ const selectBaseOption = {
 const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
-  // 使用 Mihomo 支持的最低阈值，尽快触发强制健康检查并重选节点。
   tolerance: 50,
   'exclude-type': 'DIRECT',
   icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
@@ -705,11 +705,7 @@ const serviceConfigs = [
       },
     },
     icon: 'https://fastly.jsdelivr.net/gh/lige47/QuanX-icon-rule@main/icon/04ProxySoft/exhentai.png',
-    rules: [
-      'RULE-SET,ehentai,EHentai',
-      'DOMAIN-SUFFIX,hanime1.me,EHentai',
-      'DOMAIN-SUFFIX,iwara.tv,EHentai',
-    ],
+    rules: ['RULE-SET,ehentai,EHentai', 'DOMAIN-SUFFIX,hanime1.me,EHentai', 'DOMAIN-SUFFIX,iwara.tv,EHentai'],
   },
   {
     name: 'AdBlock',
@@ -1145,7 +1141,7 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
 
 // 常见的公共 DNS，用于过滤订阅中的公共 DNS
 const commonDnsList = [
-  // IP（国内）
+  // IPv4（国内）
   '223.5.5.5',
   '223.6.6.6',
   '119.29.29.29',
@@ -1160,7 +1156,13 @@ const commonDnsList = [
   '180.184.1.1',
   '180.184.2.2',
 
-  // IP（国外）
+  // IPv6（国内）
+  '2400:3200::1',
+  '2400:3200:baba::1',
+  '2402:4e00::',
+  '2400:da00::6666',
+
+  // IPv4（国外）
   '1.1.1.1',
   '1.0.0.1',
   '8.8.8.8',
@@ -1180,6 +1182,26 @@ const commonDnsList = [
   '156.154.70.1',
   '156.154.71.1',
 
+  // IPv6（国外）
+  '2606:4700:4700::1111',
+  '2606:4700:4700::1001',
+  '2001:4860:4860::8888',
+  '2001:4860:4860::8844',
+  '2620:fe::fe',
+  '2620:fe::9',
+  '2620:119:35::35',
+  '2620:119:53::53',
+  '2a10:50c0::bad1:ff',
+  '2a10:50c0::bad2:ff',
+  '2a10:50c0::ad1:ff',
+  '2a10:50c0::ad2:ff',
+  '2a0d:2a00:1::2',
+  '2a0d:2a00:2::2',
+  '2a02:6b8::feed:0ff',
+  '2a02:6b8:0:1::feed:0ff',
+  '2610:a1:1018::1',
+  '2610:a1:1019::1',
+
   // 关键词（国内）
   'alidns',
   'doh.pub',
@@ -1190,15 +1212,19 @@ const commonDnsList = [
 
   // 关键词（国外）
   'dns.google',
-  'cloudflare',
+  'dns.cloudflare',
+  'cloudflare-dns',
   'quad9',
   'opendns',
   'nextdns',
   'adguard',
-
-  // 系统
-  'system',
 ];
+
+// 预编译公共 DNS 正则
+const commonDnsRegex = new RegExp(
+  commonDnsList.map((dns) => dns.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+  'i',
+);
 
 // 国内外 DNS 定义
 const chinaDNS = ['https://dns.alidns.com/dns-query#DIRECT', 'https://doh.pub/dns-query#DIRECT'];
@@ -1338,14 +1364,11 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
   const originalNameserverPolicy = isPlainObject(originalDnsConfig['nameserver-policy'])
     ? originalDnsConfig['nameserver-policy']
     : {};
-  const originalProxyServerNameserverPolicy = isPlainObject(
-    originalDnsConfig['proxy-server-nameserver-policy'],
-  )
+  const originalProxyServerNameserverPolicy = isPlainObject(originalDnsConfig['proxy-server-nameserver-policy'])
     ? originalDnsConfig['proxy-server-nameserver-policy']
     : {};
 
-  // 仅当原配置 proxy-server-nameserver 有且仅有一个 DNS，且该 DNS 包含非空的 listen 时，
-  // 才根据订阅 hosts 改写节点 server 为映射后的地址（域名或 IP），否则跳过改写
+  // 单一节点 DNS 指向 listen，或回环地址对应通配监听时，按订阅 hosts 改写节点。
   const proxyServerNameservers = Array.isArray(originalDnsConfig['proxy-server-nameserver'])
     ? originalDnsConfig['proxy-server-nameserver']
     : [];
@@ -1354,7 +1377,8 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     proxyServerNameservers.length === 1 &&
     typeof listenValue === 'string' &&
     listenValue.length > 0 &&
-    proxyServerNameservers.some((dns) => String(dns).toLowerCase().includes(listenValue.toLowerCase()));
+    (proxyServerNameservers.some((dns) => String(dns).toLowerCase().includes(listenValue.toLowerCase())) ||
+      (listenValue.includes('0.0.0.0') && proxyServerNameservers.some((dns) => String(dns).includes('127.0.0.1'))));
 
   // 根据订阅 hosts 改写节点 server 为映射后的地址（域名或 IP）
   const mappedProxies = shouldRewriteByHosts ? applyHostsToProxies(filteredProxies, config.hosts) : filteredProxies;
@@ -1372,17 +1396,15 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       ])
     : originalProxyDomains;
 
-  // 命中触发条件时，将 listen 值加入公共 DNS 列表并重建匹配正则，
-  // 使其在私有 DNS 提取时被当作公共 DNS 过滤，避免 listen 地址被误留为私有 DNS
-  const commonDnsSet = new Set(commonDnsList);
-  if (shouldRewriteByHosts) {
-    commonDnsSet.add(listenValue);
-  }
-  const commonDnsRegex = new RegExp(
-    [...commonDnsSet].map((dns) => dns.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
-    'i',
-  );
-  const isCommonDns = (dns) => commonDnsRegex.test(String(dns));
+  const isCommonDns = (dns) => {
+    const value = String(dns).trim().toLowerCase();
+    const address = value.split('#')[0];
+    if (address === 'system' || address === 'system://') return true;
+    if (shouldRewriteByHosts && (value.includes(listenValue.toLowerCase()) || value.includes('127.0.0.1'))) {
+      return true;
+    }
+    return commonDnsRegex.test(value);
+  };
 
   // 订阅显式提供的节点专用 DNS 可以直接沿用；普通 nameserver 不提升为节点 DNS。
   const explicitProxyDns = proxyServerNameservers
@@ -1425,7 +1447,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/15',
     'fake-ip-range6': '2001:2::1/48',
-    'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter', ...proxyFakeIpFilter],
+    'fake-ip-filter': ['rule-set:private', 'rule-set:fakeip_filter', 'rule-set:geolocation-cn', ...proxyFakeIpFilter],
     'proxy-server-nameserver': [...(privateDNS.length > 0 ? privateDNS : chinaDNS)],
     ...(Object.keys(proxyServerPolicy).length > 0 && {
       'proxy-server-nameserver-policy': proxyServerPolicy,
@@ -1446,7 +1468,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     'dns.google': ['8.8.8.8', '8.8.4.4'],
 
     // 解决谷歌商店无法下载的问题
-    'services.googleapis.cn': ['services.googleapis.com'],
+    'services.googleapis.cn': 'services.googleapis.com',
 
     // 屏蔽哔哩哔哩PCDN，解决访问视频/直播卡顿问题
     '+.mcdn.bilivideo.com': ['0.0.0.0'],
@@ -1519,9 +1541,18 @@ function main(config) {
     directGroup,
     ...generatedRegionGroups,
   ];
+  if (ruleOptionsEnable.本地直连规则) {
+    finalRuleProviders['local-direct'] = {
+      type: 'file',
+      behavior: 'classical',
+      format: 'yaml',
+      path: './ruleset/local-direct.yaml',
+    };
+  }
   newConfig['rule-providers'] = finalRuleProviders;
 
   newConfig['rules'] = [
+    ...(ruleOptionsEnable.本地直连规则 ? ['RULE-SET,local-direct,DIRECT'] : []),
     ...prefixRules,
     ...(ruleOptionsEnable.屏蔽国外QUIC ? blockForeignQuic : []),
     ...functionalRules,

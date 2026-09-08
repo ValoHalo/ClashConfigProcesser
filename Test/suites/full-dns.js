@@ -183,6 +183,80 @@ function runFullDnsTests(h, api, meta, fx) {
     h.assertEqual(out.dns.enable, true);
     h.assertDeep(out.hosts['dns.google'], ['8.8.8.8', '8.8.4.4']);
   });
+  h.test('仅 nameserver-policy 提供节点 DNS 的订阅保留完整连接参数', () => {
+    const privateDns = ['https://resolver-a.example.net/dns-query', 'https://resolver-b.example.net/dns-query'];
+    const cfg = {
+      dns: {
+        listen: '0.0.0.0:1053',
+        nameserver: ['https://ordinary.example.net/dns-query'],
+        'nameserver-policy': { '+.provider.example': privateDns, '+.unused.example': privateDns },
+        'fake-ip-filter': ['+.provider.example', '+.unused.example'],
+      },
+      proxies: Array.from({ length: 26 }, (_, i) => ({
+        name: '香港节点 ' + i,
+        type: i % 2 ? 'anytls' : 'vless',
+        server: i < 25 ? 'node' + i + '.provider.example' : 'other.example.net',
+        port: 443,
+        udp: true,
+        tls: true,
+        ...(i % 2
+          ? { password: 'example-password', sni: 'tls.example.net', alpn: ['h2'] }
+          : {
+              uuid: '00000000-0000-4000-8000-000000000000',
+              flow: 'xtls-rprx-vision',
+              servername: 'tls.example.net',
+              'client-fingerprint': 'chrome',
+              'reality-opts': { 'public-key': 'example-key', 'short-id': '01234567' },
+            }),
+      })),
+    };
+    const snapshot = JSON.stringify(cfg);
+    const out = api.main(cfg);
+    const subs = out.proxies.filter((p) => p.type !== 'direct');
+    h.assertEqual(subs.length, 26);
+    for (let i = 0; i < subs.length; i++) {
+      const { name: inputName, ...input } = cfg.proxies[i];
+      const { name: outputName, ...output } = subs[i];
+      h.assertDeep(output, input);
+    }
+    h.assertDeep(out.dns['proxy-server-nameserver'], privateDns);
+    h.assertDeep(out.dns['proxy-server-nameserver-policy'], { '+.provider.example': privateDns });
+    for (const [domain, values] of Object.entries(cfg.dns['nameserver-policy'])) {
+      h.assertDeep(out.dns['nameserver-policy'][domain], values);
+    }
+    h.assert(out.dns['fake-ip-filter'].includes('+.provider.example'));
+    h.assert(!out.dns['fake-ip-filter'].includes('+.unused.example'));
+    h.assertEqual(JSON.stringify(cfg), snapshot, '不应修改输入订阅');
+  });
+  h.test('公共 IPv6 与 system DNS 不作为私有解析器，名称包含 system 的域名有效', () => {
+    const cfg = fx.minimalSubscription();
+    const privateDns = 'https://dns.system-provider.example/dns-query';
+    cfg.dns = {
+      'proxy-server-nameserver': [
+        'tls://[2606:4700:4700::1111]',
+        'https://[2400:3200::1]/dns-query',
+        'system',
+        'system://#DIRECT',
+        privateDns,
+      ],
+    };
+    h.assertDeep(api.main(cfg).dns['proxy-server-nameserver'], [privateDns]);
+  });
+  h.test('回环 DNS 与通配监听触发 hosts 改写，本地解析器不进入私有 DNS', () => {
+    const cfg = fx.typicalSubscription();
+    cfg.dns.listen = '0.0.0.0:1053';
+    cfg.dns['proxy-server-nameserver'] = ['udp://127.0.0.1:1053'];
+    cfg.dns['proxy-server-nameserver-policy']['hk1.example.com'] = ['udp://127.0.0.1:1053'];
+    const out = api.main(cfg);
+    h.assertEqual(out.proxies.find((p) => p.name === '🇭🇰 香港 01 | 中转').server, '10.0.0.1');
+    h.assert(!JSON.stringify(out.dns['proxy-server-nameserver']).includes('127.0.0.1'));
+    h.assert(!('hk1.example.com' in out.dns['proxy-server-nameserver-policy']));
+  });
+  h.test('国内真实 IP 规则集与字符串 hosts 别名有效', () => {
+    const out = api.main(fx.minimalSubscription());
+    h.assert(out.dns['fake-ip-filter'].includes('rule-set:geolocation-cn'));
+    h.assertDeep(out.hosts['services.googleapis.cn'], 'services.googleapis.com');
+  });
 }
 
 module.exports = { runFullDnsTests };

@@ -375,6 +375,23 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
     }),
   );
   if (meta.full) {
+    h.test('本地直连规则由开关控制，并优先于广告和其他分流规则', () => {
+      withOptions(api, { 本地直连规则: false }, () => {
+        const out = api.main(fx.minimalSubscription());
+        h.assert(!out['rule-providers']['local-direct']);
+        h.assert(!out.rules.some((rule) => rule.includes('local-direct')));
+      });
+      withOptions(api, { 本地直连规则: true }, () => {
+        const out = api.main(fx.minimalSubscription());
+        h.assertEqual(out.rules[0], 'RULE-SET,local-direct,DIRECT');
+        h.assertDeep(out['rule-providers']['local-direct'], {
+          type: 'file',
+          behavior: 'classical',
+          format: 'yaml',
+          path: './ruleset/local-direct.yaml',
+        });
+      });
+    });
     h.test('全量版保留个人服务设置与网络暴露设置', () => {
       const out = api.main(fx.minimalSubscription());
       h.assert(groupByName(out['proxy-groups'], 'OneDrive'), '应生成 OneDrive 策略组');
@@ -385,7 +402,17 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
       for (const key of ['mixed-port', 'allow-lan', 'external-controller', 'external-ui', 'external-ui-url']) {
         h.assert(!(key in out), `全量版不应主动生成 ${key}`);
       }
-      h.assertEqual(groupByName(out['proxy-groups'], '香港-自动选择')['max-failed-times'], 2);
+      const auto = groupByName(out['proxy-groups'], '香港-自动选择');
+      h.assertEqual(auto['max-failed-times'], 2);
+      h.assertEqual(auto.interval, 400);
+      h.assertEqual(auto.tolerance, 50);
+      h.assertEqual(groupByName(out['proxy-groups'], 'OneDrive')['default-selected'], '直连');
+      h.assert(out['rule-providers'].adblockmihomo);
+      h.assertDeep(out.dns['direct-nameserver'], [
+        'https://dns.alidns.com/dns-query#DIRECT',
+        'https://doh.pub/dns-query#DIRECT',
+      ]);
+      h.assert(out.dns.nameserver.includes('https://v.recipes/dns-cn#DIRECT'));
     });
   }
 

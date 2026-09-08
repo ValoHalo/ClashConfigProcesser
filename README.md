@@ -66,6 +66,36 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/
 | --------------------------------------------------------------------------------- |
 | ![img](https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Image/import.webp) |
 
+## Bettbox 本地直连规则
+
+全量版可从设备上的 `ruleset/local-direct.yaml` 读取私有直连规则。此路径相对于 Mihomo 工作目录（Bettbox 数据目录），不是本仓库目录。
+
+1. 在 Bettbox 数据目录下创建 `ruleset/local-direct.yaml`，内容示例：
+
+```yaml
+payload:
+  - DOMAIN,private.example.com
+  - DOMAIN-SUFFIX,example.org
+```
+
+2. 在 Bettbox 的脚本列表中，打开全量版脚本的菜单 → **自定义** → 开启 **本地直连规则**。
+3. 应用配置；这些规则排在其他分流规则前，匹配后使用 `DIRECT`。
+
+先准备文件，再开启开关；缺少文件时内核可能无法加载配置。关闭开关时不会引用该文件。脚本只包含固定文件路径，真实域名仅保存在设备文件内；在本仓库中同名路径也已加入 Git 忽略列表。
+
+Bettbox 当前公开源码在启用脚本时不执行订阅页面的普通规则覆写，因此应使用上述文件规则入口。其“自定义”选项支持布尔开关，域名列表不填在选项中。Windows 可在应用数据目录管理文件；Android 的应用私有目录可能无法由普通文件管理器写入，需要可用的本地文件导入或目录访问方式。
+
+参考：[Bettbox 配置应用顺序](https://github.com/appshubcc/Bettbox/blob/main/lib/state.dart)、[脚本选项](https://github.com/appshubcc/Bettbox/blob/main/lib/views/profiles/scripts.dart)。
+
+## 全量版配置行为
+
+- 节点 DNS 来源为订阅显式提供的 `proxy-server-nameserver`，以及匹配节点域名的 DNS policy；过滤公共解析器，普通 `nameserver` 不提升为节点 DNS。
+- 有私有解析器时使用这些解析器作为节点 DNS；没有时使用国内 DoH。原始 `nameserver-policy` 保留，节点精确策略不自动扩展为父域通配策略，`#DIRECT` 的附加参数保留。
+- hosts 改写支持单一节点 DNS 指向监听地址，以及 `127.0.0.1` 对应 `0.0.0.0` 监听的情况；保留改写前后域名对应的解析策略。
+- 默认启用 OneDrive（默认直连）、DLsite、地区负载均衡和完整广告规则；默认关闭 TikTok、Emby、Spotify、Crypto、国外 QUIC 屏蔽与本地直连规则。
+- 健康检查间隔为 400 秒、失败阈值为 2、自动选择容差为 50。国内与直连 DNS 使用 DoH，直连解析不加入系统 DNS。
+- 端口、LAN、控制器和 Web UI 由客户端管理。Bettbox 的脚本自定义选项可覆盖脚本中的同名默认开关；客户端的 DNS 覆写也会影响最终 DNS，使用脚本 DNS 时应关闭客户端 DNS 覆写。
+
 ## 配置文件
 
 配置文件与脚本实现效果基本一致，但功能存在限制。

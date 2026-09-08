@@ -204,76 +204,101 @@ function runUnitTests(h, api, meta) {
     h.assertEqual(out[1].server, 'a.b.example.com');
   });
 
-  h.section('单元测试 · stripDnsSuffix（DNS # 策略组后缀处理）');
-  h.test('无 # 后缀 → 原样返回', () =>
-    h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query'), 'https://dns.example.com/dns-query'),
-  );
-  h.test('非 direct 开头后缀 → 剥离', () =>
-    h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query#proxy'), 'https://dns.example.com/dns-query'),
-  );
-  h.test('#direct/直连 后缀 → 规范化为 #DIRECT（忽略大小写、含附加参数）', () => {
-    for (const url of [
-      'https://dns.example.com/dns-query#direct',
-      'https://dns.example.com/dns-query#DIRECT',
-      'https://dns.example.com/dns-query#direct&ecs=2.2.2.2',
-      'https://dns.example.com/dns-query#直连',
-    ]) {
-      h.assertEqual(api.stripDnsSuffix(url), 'https://dns.example.com/dns-query#DIRECT');
-    }
-  });
-  h.test('包含 direct 的后缀 → 规范化为 #DIRECT', () =>
-    h.assertEqual(
-      api.stripDnsSuffix('https://dns.example.com/dns-query#directxxx'),
-      'https://dns.example.com/dns-query#DIRECT',
-    ),
-  );
+  if (meta.full) {
+    h.section('单元测试 · stripDnsSuffix（DNS # 策略组后缀处理）');
+    h.test('无 # 后缀 → 原样返回', () =>
+      h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query'), 'https://dns.example.com/dns-query'),
+    );
+    h.test('非 direct 开头后缀 → 剥离', () =>
+      h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query#proxy'), 'https://dns.example.com/dns-query'),
+    );
+    h.test('#direct 后缀 → 整条保留（忽略大小写、含附加参数）', () => {
+      for (const url of [
+        'https://dns.example.com/dns-query#direct',
+        'https://dns.example.com/dns-query#DIRECT',
+        'https://dns.example.com/dns-query#direct&ecs=2.2.2.2',
+      ]) {
+        h.assertEqual(api.stripDnsSuffix(url), url);
+      }
+    });
+    h.test('#directxxx 后缀 → 剥离（词边界）', () =>
+      h.assertEqual(
+        api.stripDnsSuffix('https://dns.example.com/dns-query#directxxx'),
+        'https://dns.example.com/dns-query',
+      ),
+    );
+  } else {
+    h.section('单元测试 · stripDnsSuffix（DNS # 策略组后缀处理）');
+    h.test('无 # 后缀 → 原样返回', () =>
+      h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query'), 'https://dns.example.com/dns-query'),
+    );
+    h.test('非 direct 开头后缀 → 剥离', () =>
+      h.assertEqual(api.stripDnsSuffix('https://dns.example.com/dns-query#proxy'), 'https://dns.example.com/dns-query'),
+    );
+    h.test('#direct/直连 后缀 → 规范化为 #DIRECT（忽略大小写、含附加参数）', () => {
+      for (const url of [
+        'https://dns.example.com/dns-query#direct',
+        'https://dns.example.com/dns-query#DIRECT',
+        'https://dns.example.com/dns-query#direct&ecs=2.2.2.2',
+        'https://dns.example.com/dns-query#直连',
+      ]) {
+        h.assertEqual(api.stripDnsSuffix(url), 'https://dns.example.com/dns-query#DIRECT');
+      }
+    });
+    h.test('包含 direct 的后缀 → 规范化为 #DIRECT', () =>
+      h.assertEqual(
+        api.stripDnsSuffix('https://dns.example.com/dns-query#directxxx'),
+        'https://dns.example.com/dns-query#DIRECT',
+      ),
+    );
 
-  h.section('单元测试 · simplifyDomainPolicy（节点域名 DNS 策略压缩）');
-  h.test('相同 DNS 的同一后缀子域 → 合并为 +. 后缀规则', () =>
-    h.assertDeep(
-      api.simplifyDomainPolicy({
-        'a.example.com': ['https://dns.example/dns-query'],
-        'b.example.com': ['https://dns.example/dns-query'],
-      }),
-      { '+.example.com': ['https://dns.example/dns-query'] },
-    ),
-  );
-  h.test('DNS 不同或只有一个子域 → 保留精确规则', () =>
-    h.assertDeep(
-      api.simplifyDomainPolicy({
-        'a.example.com': 'https://dns-a.example/dns-query',
-        'b.example.com': 'https://dns-b.example/dns-query',
-        'only.other.com': 'https://dns.example/dns-query',
-      }),
-      {
-        'a.example.com': 'https://dns-a.example/dns-query',
-        'b.example.com': 'https://dns-b.example/dns-query',
-        'only.other.com': 'https://dns.example/dns-query',
-      },
-    ),
-  );
-  h.test('两段域名策略 → 原样保留，不能在压缩时丢失', () =>
-    h.assertDeep(
-      api.simplifyDomainPolicy({
-        'example.com': 'https://dns.example/dns-query',
-      }),
-      { 'example.com': 'https://dns.example/dns-query' },
-    ),
-  );
+    h.section('单元测试 · simplifyDomainPolicy（节点域名 DNS 策略压缩）');
+    h.test('相同 DNS 的同一后缀子域 → 合并为 +. 后缀规则', () =>
+      h.assertDeep(
+        api.simplifyDomainPolicy({
+          'a.example.com': ['https://dns.example/dns-query'],
+          'b.example.com': ['https://dns.example/dns-query'],
+        }),
+        { '+.example.com': ['https://dns.example/dns-query'] },
+      ),
+    );
+    h.test('DNS 不同或只有一个子域 → 保留精确规则', () =>
+      h.assertDeep(
+        api.simplifyDomainPolicy({
+          'a.example.com': 'https://dns-a.example/dns-query',
+          'b.example.com': 'https://dns-b.example/dns-query',
+          'only.other.com': 'https://dns.example/dns-query',
+        }),
+        {
+          'a.example.com': 'https://dns-a.example/dns-query',
+          'b.example.com': 'https://dns-b.example/dns-query',
+          'only.other.com': 'https://dns.example/dns-query',
+        },
+      ),
+    );
+    h.test('两段域名策略 → 原样保留，不能在压缩时丢失', () =>
+      h.assertDeep(
+        api.simplifyDomainPolicy({
+          'example.com': 'https://dns.example/dns-query',
+        }),
+        { 'example.com': 'https://dns.example/dns-query' },
+      ),
+    );
 
-  h.section('单元测试 · isIpAddress（IP 地址识别）');
-  h.test('IPv4 → true', () => {
-    h.assert(api.isIpAddress('1.2.3.4'));
-    h.assert(api.isIpAddress('10.0.0.1'));
-  });
-  h.test('IPv6 → true', () => {
-    h.assert(api.isIpAddress('2001:db8::1'));
-    h.assert(api.isIpAddress('::1'));
-  });
-  h.test('域名 → false', () => {
-    h.assert(!api.isIpAddress('example.com'));
-    h.assert(!api.isIpAddress('hk1.example.com'));
-  });
+    h.section('单元测试 · isIpAddress（IP 地址识别）');
+    h.test('IPv4 → true', () => {
+      h.assert(api.isIpAddress('1.2.3.4'));
+      h.assert(api.isIpAddress('10.0.0.1'));
+    });
+    h.test('IPv6 → true', () => {
+      h.assert(api.isIpAddress('2001:db8::1'));
+      h.assert(api.isIpAddress('::1'));
+    });
+    h.test('域名 → false', () => {
+      h.assert(!api.isIpAddress('example.com'));
+      h.assert(!api.isIpAddress('hk1.example.com'));
+    });
+  }
 }
 
 module.exports = { runUnitTests };

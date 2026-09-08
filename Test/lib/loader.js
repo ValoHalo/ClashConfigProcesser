@@ -17,12 +17,12 @@ const EXPORT_SUFFIX = `
   matchDomainPattern,
   applyHostsToProxies,
   stripDnsSuffix,
-  simplifyDomainPolicy,
+  simplifyDomainPolicy: typeof simplifyDomainPolicy === 'undefined' ? undefined : simplifyDomainPolicy,
   getMatchedRegions,
   normalizeProxyName,
   fixDialerProxy,
-  isIpAddress,
-  chinaDohDNS,
+  isIpAddress: typeof isIpAddress === 'undefined' ? undefined : isIpAddress,
+  chinaDohDNS: typeof chinaDohDNS === 'undefined' ? undefined : chinaDohDNS,
   ruleOptionsEnable
 };
 // 仅全量版存在 buildCustomizeGroups，精简版无此函数时保持导出不报错

@@ -375,23 +375,6 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
     }),
   );
   if (meta.full) {
-    h.test('本地直连规则由开关控制，并优先于广告和其他分流规则', () => {
-      withOptions(api, { 本地直连规则: false }, () => {
-        const out = api.main(fx.minimalSubscription());
-        h.assert(!out['rule-providers']['local-direct']);
-        h.assert(!out.rules.some((rule) => rule.includes('local-direct')));
-      });
-      withOptions(api, { 本地直连规则: true }, () => {
-        const out = api.main(fx.minimalSubscription());
-        h.assertEqual(out.rules[0], 'RULE-SET,local-direct,DIRECT');
-        h.assertDeep(out['rule-providers']['local-direct'], {
-          type: 'file',
-          behavior: 'classical',
-          format: 'yaml',
-          path: './ruleset/local-direct.yaml',
-        });
-      });
-    });
     h.test('全量版保留个人服务设置与网络暴露设置', () => {
       const out = api.main(fx.minimalSubscription());
       h.assert(groupByName(out['proxy-groups'], 'OneDrive'), '应生成 OneDrive 策略组');

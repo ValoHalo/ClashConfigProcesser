@@ -47,7 +47,6 @@ const ruleOptionsEnable = {
   DLsite: true, // 日本平台，会根据用户IP调整支付方式和部分内容
 
   // 以下为非分流策略配置
-  本地直连规则: false, // 从 ./ruleset/local-direct.yaml 读取本地直连规则
   生成地区自动选择组: true, // 是否生成地区自动选择策略组
   生成地区负载均衡组: true, // 是否为各地区生成负载均衡策略组
   隐藏地区手动选择组: false, // 是否隐藏地区手动选择策略组
@@ -1541,18 +1540,9 @@ function main(config) {
     directGroup,
     ...generatedRegionGroups,
   ];
-  if (ruleOptionsEnable.本地直连规则) {
-    finalRuleProviders['local-direct'] = {
-      type: 'file',
-      behavior: 'classical',
-      format: 'yaml',
-      path: './ruleset/local-direct.yaml',
-    };
-  }
   newConfig['rule-providers'] = finalRuleProviders;
 
   newConfig['rules'] = [
-    ...(ruleOptionsEnable.本地直连规则 ? ['RULE-SET,local-direct,DIRECT'] : []),
     ...prefixRules,
     ...(ruleOptionsEnable.屏蔽国外QUIC ? blockForeignQuic : []),
     ...functionalRules,

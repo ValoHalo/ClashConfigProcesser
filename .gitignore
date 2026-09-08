@@ -2,6 +2,3 @@ test.yaml
 node_modules/
 /*.yaml
 IDEA.md
-
-# Local rule payloads
-/ruleset/local-direct.yaml

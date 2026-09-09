@@ -5,6 +5,8 @@ const { Harness } = require('./lib/harness');
 const fx = require('./lib/fixtures');
 const { runUnitTests } = require('./suites/unit');
 const { runIntegrationTests } = require('./suites/integration');
+const { runFullBehaviorTests } = require('./suites/full-behavior');
+const { runPersonalPolicyTests } = require('./suites/personal-policy');
 const { runES2020Checks } = require('./lib/es2020-check');
 const { runQuickJSChecks } = require('./lib/quickjs-check');
 const { SCRIPTS } = require('./lib/scripts');
@@ -52,6 +54,10 @@ async function main() {
 
       runUnitTests(h, api, script.meta);
       runIntegrationTests(h, api, script.meta, fx, loadScript, script.file);
+      if (script.meta.full) {
+        runFullBehaviorTests(h, api, fx, loadScript, script.file);
+        runPersonalPolicyTests(h, fx, loadScript, script.file);
+      }
       printDemo(api, script.label, script.meta);
 
       const s = h.summary();
@@ -60,7 +66,7 @@ async function main() {
     }
   }
 
-  // ES2020 兼容性检查（语法 + 内置 API 静态扫描，未安装 espree 时自动跳过）
+  // ES2020 兼容性检查（语法 + 内置 API 静态扫描）
   if (shouldRunES2020) {
     const hES2020 = new Harness('ES2020 兼容性检查');
     runES2020Checks({ harness: hES2020 });
@@ -69,7 +75,7 @@ async function main() {
     totalFailed += se.failed;
   }
 
-  // QuickJS 引擎兼容性验证（真实引擎加载 + 实际调用 main，未安装依赖时自动跳过）
+  // QuickJS 引擎兼容性验证（真实引擎加载 + 实际调用 main）
   if (shouldRunQuickJS) {
     const hQuickJS = new Harness('QuickJS 引擎验证');
     await runQuickJSChecks({ harness: hQuickJS, fixtures: fx });

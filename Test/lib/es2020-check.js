@@ -39,7 +39,7 @@ const MEMBER_APIS = [
 // 通用短名方法：仅在作为方法调用（x.xxx(...)）时才视为越界，降低误报
 const CALL_ONLY_APIS = ['at', 'union', 'intersection', 'difference', 'try'];
 
-/** 尝试加载 espree；仅「未安装」时返回 null（调用方应优雅跳过） */
+/** 尝试加载 espree；仅「未安装」时返回 null（调用方报告依赖错误） */
 function tryLoadEspree() {
   try {
     return require('espree');
@@ -110,17 +110,14 @@ function findApiViolations(ast) {
  * ES2020 兼容性检查（同步，静态分析）：
  * 1. 用 espree 以 ecmaVersion: 2020 解析脚本 —— 任何 ES2021+ 语法都会抛出解析错误；
  * 2. 遍历 AST 检查是否使用了 ES2021+ 的内置 API。
- * 未安装 espree 时跳过（不记入通过/失败）。
+ * 未安装 espree 时报告依赖错误。
  *
  * @param {object} opts { harness }
  */
 function runES2020Checks({ harness }) {
   const espree = tryLoadEspree();
   if (!espree) {
-    harness.section('ES2020 兼容性检查（已跳过）');
-    console.log('    ⚠ 未安装 espree 依赖，已跳过 ES2020 兼容性检查。');
-    console.log('      如需启用：npm --prefix Test install');
-    return;
+    throw new Error('ES2020 检查依赖未安装，请在仓库根目录运行 npm ci');
   }
 
   harness.section('ES2020 兼容性检查');

@@ -147,11 +147,11 @@ function runUnitTests(h, api, meta) {
   // 与 buildDnsAndHostsConfig 调用方式一致
   const apply = (proxies, hosts) => api.applyHostsToProxies(proxies, hosts);
   const mkProxy = (server) => ({ name: 'x', server });
-  h.test('精确映射改写：字符串直接替换、数组取首个值', () => {
+  h.test('精确 hosts 映射和多地址处理', () => {
     h.assertEqual(apply([mkProxy('node.example.com')], { 'node.example.com': '1.2.3.4' })[0].server, '1.2.3.4');
     h.assertEqual(
       apply([mkProxy('node.example.com')], { 'node.example.com': ['1.2.3.4', '1.2.3.5'] })[0].server,
-      '1.2.3.4',
+      meta.full ? 'node.example.com' : '1.2.3.4',
     );
   });
   h.test('+.通配映射命中子域', () => {
@@ -171,12 +171,14 @@ function runUnitTests(h, api, meta) {
     const out = apply([mkProxy('a.example.com')], { 'a.example.com': 'b.example.com' });
     h.assertEqual(out[0].server, 'b.example.com');
   });
-  h.test('回环映射防御性终止（内核会拒绝此类配置）', () => {
-    const out = apply([mkProxy('a.example.com')], {
-      'a.example.com': 'b.example.com',
-      'b.example.com': 'a.example.com',
-    });
-    h.assert(['a.example.com', 'b.example.com'].includes(out[0].server), '回环映射不应死循环');
+  h.test('hosts 循环映射处理', () => {
+    const run = () =>
+      apply([mkProxy('a.example.com')], {
+        'a.example.com': 'b.example.com',
+        'b.example.com': 'a.example.com',
+      });
+    if (meta.full) h.assertThrows(run, /循环/);
+    else h.assert(['a.example.com', 'b.example.com'].includes(run()[0].server), '回环映射不应死循环');
   });
   h.test('无 hosts 时节点原样保留', () => {
     const p = [mkProxy('a.example.com')];

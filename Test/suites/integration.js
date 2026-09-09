@@ -323,7 +323,7 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
     }),
   );
   h.test('分流组添加所有节点=true → 分流组含全部节点', () =>
-    withOptions(api, { 分流组添加所有节点: true }, () => {
+    withOptions(api, { 分流组添加所有节点: true, AI固定出口: false }, () => {
       const out = api.main(fx.minimalSubscription());
       h.assert(groupByName(out['proxy-groups'], 'AI').proxies.includes('🇭🇰 香港 A'), 'AI 组应含全部节点');
     }),
@@ -395,7 +395,7 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
         'https://dns.alidns.com/dns-query#DIRECT',
         'https://doh.pub/dns-query#DIRECT',
       ]);
-      h.assert(out.dns.nameserver.includes('https://v.recipes/dns-cn#DIRECT'));
+      h.assert(!out.dns.nameserver.includes('https://v.recipes/dns-cn#DIRECT'));
     });
   }
 
@@ -524,7 +524,7 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
 
   h.test('未启用链式代理：自定义节点保持自建- 前缀且 dialer-proxy 不被修改', () => {
     const customApi = loadScript(scriptFile, (code) =>
-      code.replace('const customizeProxies = [];', chainCustomInjection),
+      code.replace('const customizeProxies = [];', chainCustomInjection.replace("'旧中转'", "'🇺🇸 美国 01 | 解锁'")),
     );
     const out = customApi.main(fx.typicalSubscription());
     const n = proxyNames(out.proxies);
@@ -532,7 +532,7 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
     h.assert(n.includes('🇯🇵 自建-日本-01'), '自定义节点名称保持不变');
     h.assertEqual(
       out.proxies.find((x) => x.name === '🇭🇰 自建-香港 01 | 中转')['dialer-proxy'],
-      '旧中转',
+      '🇺🇸 美国 01 | 解锁',
       '未启用链式代理时 dialer-proxy 应保持不变',
     );
     h.assert(!groupByName(out['proxy-groups'], '链式中转'), '不应生成链式中转组');

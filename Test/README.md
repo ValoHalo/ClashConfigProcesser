@@ -7,12 +7,11 @@
 在仓库根目录执行：
 
 ```bash
-node Test/run-tests.js
-# 或
-npm --prefix Test test
+npm ci
+npm run check
 ```
 
-仅需要 Node.js（推荐 ≥ 16）。
+使用 Node.js 24；依赖和版本统一由仓库根目录的 `package-lock.json` 管理，`Test` 为 npm workspace。
 
 可按需只运行某一部分（参数可组合）：
 
@@ -22,28 +21,28 @@ node Test/run-tests.js --es2020   # 仅 ES2020 兼容性检查
 node Test/run-tests.js --quickjs  # 仅 QuickJS 引擎验证
 ```
 
-### 兼容性验证（可选依赖）
+### 兼容性验证
 
 `run-tests.js` 会自动执行两项兼容性验证，分别依赖两个 npm 包，首次使用前安装：
 
 ```bash
-npm --prefix Test install
+npm ci
 ```
 
 - **ES2020 兼容性检查**：用 `espree` 以 `ecmaVersion: 2020` 解析脚本（任何 ES2021+ 语法都会报错），并静态扫描是否使用了 ES2021+ 的内置 API。
-  单独运行：`npm --prefix Test run test:es2020`（等价于 `node Test/run-tests.js --es2020`）
+  单独运行：`npm run test:es2020`（等价于 `node Test/run-tests.js --es2020`）
 - **QuickJS 引擎验证**：用真实 QuickJS 引擎加载脚本并调用 `main()`。
-  单独运行：`npm --prefix Test run test:quickjs`（等价于 `node Test/run-tests.js --quickjs`）
+  单独运行：`npm run test:quickjs`（等价于 `node Test/run-tests.js --quickjs`）
 
-任一依赖未安装时，对应部分会自动跳过（不影响其余测试结果）。
+完整检查要求两项兼容性依赖均已安装，缺少依赖时会报错。仅运行 Node 单元和集成测试可使用 `npm run test:node`。QuickJS 与 Node 的对照覆盖完整配置对象，包括 DNS、连接参数、策略组、规则及规则集。
 
 ## 覆盖内容
 
 ### 单元测试（纯函数）
 
 - `matchDomainPattern`：精确 / `+.` / `.` / `*.` / 中间通配符、大小写
-- `applyHostsToProxies`：hosts 映射改写节点 server（精确/通配/数组取值/优先级/链式映射，回环映射防御性终止）
-- `stripDnsSuffix`：# 策略组后缀处理（#direct 或 #direct&参数 整条保留，direct 后接其他字符仍剥离）
+- `applyHostsToProxies`：hosts 映射改写节点 server（精确/通配/多地址/优先级/链式映射；全量版保留多地址和 TLS 服务器名，并拒绝循环映射）
+- `stripDnsSuffix`：# 策略组后缀处理（全量版独立保留键值参数，清理失效的策略组选择器）
 - `getMatchedRegions`：香港 / 日本 / 美国 / 新加坡 / 台湾省（全量版）以及低/高倍率匹配
 - `normalizeProxyName`：自动补国旗、折叠空格、保持原名
 - `fixDialerProxy`：重命名引用更新、引用目标不存在时移除、未变引用保留
@@ -77,6 +76,7 @@ Test/
 └── suites/
     ├── unit.js             # 纯函数单元测试
     ├── full-dns.js         # 全量版私有 DNS 与 hosts 集成测试
+    ├── full-behavior.js    # 倍率边界、引用完整性、DNS 依赖、hosts 传输参数和规则顺序
     └── integration.js      # main() 集成测试
 ```
 
@@ -86,3 +86,38 @@ Test/
 - 测试通过修改导出的 `ruleOptionsEnable` 对象来模拟配置项开关，用 `withOptions` 保证用后恢复。
 
 全量版另覆盖 policy-only 订阅（26 个节点、VLESS/AnyTLS 连接参数完整保留）、公共 IPv6 DNS 过滤、回环 DNS 与通配监听、精确策略范围及 DIRECT 参数。所有固定用例使用虚构域名与凭据，不依赖本地真实订阅。
+
+## Bettbox 内核与联网验证
+
+`npm run check` 包含脚本检查、Node/ES2020/QuickJS 对照以及无需外网的探测工具测试。
+
+Windows 已安装 Bettbox 时，可以运行：
+
+```powershell
+npm run test:core
+```
+
+默认使用 `C:/Program Files/Bettbox/BettboxCore.exe`。其他安装位置通过 `BETTBOX_CORE_PATH` 指定。测试启动单独的内核进程，使用独立目录、动态回环端口和控制器口令；TUN 与 LAN 监听关闭。测试不会修改系统代理，也不会连接或停止正在使用的 Bettbox 实例。
+
+内核测试覆盖：
+
+- 生成配置实际加载、严格固定、同区主备、HTTP 状态码判定和主节点恢复。
+- 订阅重排、节点消失、旧地区选择失效、冷启动时恢复客户端 selected-map。
+- 私有节点 DNS、服务 DNS 出口、已有 DoH 连接保持及重载后使用新出口。
+- 下载直连、直连失败不自动改走代理、账号域名保留服务分流。
+- 复制 Node 到测试目录并命名为 OneDrive.exe，验证实际 Windows 进程识别；普通 node.exe 作为反向对照。测试不启动或修改真实 OneDrive。
+- 已有流式连接与新连接在切换节点后的行为。
+
+所有节点、DNS 和 HTTP 服务均为回环测试服务。快速检测用 2 秒的测试周期验证实际定时检查，生成配置的 400/120 秒参数由脚本测试校验。客户端 UI 的手动延迟接口不能代替预期状态码的定时检查。
+
+实际订阅和外网检查需要显式提供订阅文件以及下载规则集使用的代理：
+
+```powershell
+npm run test:live -- --subscription ctc.yaml --download-proxy http://127.0.0.1:33333
+```
+
+该命令使用当前订阅的真实节点，下载完整规则集并加载到另一个回环内核实例；每个目标地区最多试 3 个节点。测试期间关闭定时测速，按需检查基础 HTTPS、服务域名和各 DNS 方案的冷/热缓存查询。DNS 和 HTTP 错误会写入报告，不代表所有线路或网络环境的长期表现。
+
+结果保存在被 Git 忽略的 `.test-runtime/core-results.json` 和 `.test-runtime/live-results.json`。真实订阅内容不打印到报告，原文件保持不变，测试完成后删除临时生成的订阅配置。缓存与原始日志只保留在本地测试目录。
+
+上述测试验证 Windows 内核行为。Android 包名规则有生成测试覆盖，未替代 Android 真机测试；回环故障、连接重建和冷启动测试也不等同于真实 Wi-Fi/移动网络切换。

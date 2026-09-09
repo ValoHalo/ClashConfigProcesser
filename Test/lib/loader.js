@@ -23,9 +23,10 @@ const EXPORT_SUFFIX = `
   fixDialerProxy,
   isIpAddress: typeof isIpAddress === 'undefined' ? undefined : isIpAddress,
   chinaDohDNS: typeof chinaDohDNS === 'undefined' ? undefined : chinaDohDNS,
-  ruleOptionsEnable
+  ruleOptionsEnable,
+  personalConfig: typeof personalConfig === 'undefined' ? undefined : personalConfig
 };
-// 仅全量版存在 buildCustomizeGroups，精简版无此函数时保持导出不报错
+// 自定义节点组接口可用时一并导出
 if (typeof buildCustomizeGroups !== 'undefined') {
   module.exports.buildCustomizeGroups = buildCustomizeGroups;
 }`;

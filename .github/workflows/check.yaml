@@ -9,6 +9,7 @@ on:
       - 'Test/**'
       - 'package.json'
       - 'package-lock.json'
+      - '.github/workflows/check.yaml'
   pull_request:
     branches: ['main', 'modified']
   workflow_dispatch:
@@ -18,7 +19,10 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: checkout code

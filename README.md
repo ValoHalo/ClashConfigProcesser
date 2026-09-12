@@ -72,7 +72,8 @@ https://raw.githubusercontent.com/ValoHalo/ClashConfigProcesser/modified/Script/
 - 有私有解析器时使用这些解析器作为节点 DNS；没有时使用国内 DoH。有效的 `nameserver-policy` 及其引用的订阅规则集保留；失效的规则集引用和策略组选择器会被清理。节点精确策略不扩展为父域通配策略；DNS 的 `ecs`、`h3` 等键值参数独立保留。
 - hosts 改写要求单一节点 DNS 与监听地址及端口一致，支持 IPv4/IPv6 回环地址对应通配监听。单地址改写保留 TLS 服务器名；WS、gRPC 等传输配置保留原节点地址及精确 hosts；多地址保留完整 IPv4/IPv6 列表，由内核按节点 IP 偏好选择。循环映射会报错。
 - 默认启用 OneDrive（默认直连）、DLsite、地区负载均衡和完整广告规则；默认关闭 TikTok、Emby、Spotify、Crypto和国外 QUIC 屏蔽。
-- 分流顺序为私有网络、广告拦截、专属进程、下载更新、国内直连、服务分流和兜底规则。OneDrive 的进程规则优先于国内域名直连规则。
+- 全量版与精简版均内置常见学术网站的直连规则，覆盖知网、万方、维普、Elsevier / ScienceDirect、Springer / Nature、Wiley、IEEE、ACM、ASCE、arXiv、PubMed、Web of Science，以及 DOI、Crossref 和 ORCID；匹配域名及其子域名，使用“直连”策略组。
+- 分流顺序为私有网络、广告拦截、专属进程、下载更新、国内与学术网站直连、服务分流和兜底规则。OneDrive 的进程规则优先于国内域名直连规则。
 - 策略组的默认选项同时放在候选列表首位；订阅节点与策略组重名时分配独立名称并同步引用，自定义节点的内部中转引用也随重命名更新。不存在的自定义中转目标及循环引用会报错。
 - 倍率由带 `x`、`倍` 或乘号的完整数值判定：低倍率 ≤0.5，高倍率 ≥2；`0.59x` 不属于低倍率节点。
 - 健康检查使用 Apple 测试页，预期 HTTP 200，间隔 400 秒、超时 3000 毫秒、失败检查阈值 2、自动选择容差 50 毫秒。国内与直连 DNS 使用 DoH，直连解析不加入系统 DNS。

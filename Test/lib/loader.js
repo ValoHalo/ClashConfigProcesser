@@ -22,7 +22,8 @@ const EXPORT_SUFFIX = `
   normalizeProxyName,
   fixDialerProxy,
   isIpAddress: typeof isIpAddress === 'undefined' ? undefined : isIpAddress,
-  chinaDohDNS: typeof chinaDohDNS === 'undefined' ? undefined : chinaDohDNS,
+  defaultDNS: typeof defaultDNS === 'undefined' ? undefined : defaultDNS,
+  proxyServerDNS: typeof proxyServerDNS === 'undefined' ? undefined : proxyServerDNS,
   ruleOptionsEnable,
   personalConfig: typeof personalConfig === 'undefined' ? undefined : personalConfig
 };

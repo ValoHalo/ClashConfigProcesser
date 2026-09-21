@@ -32,6 +32,7 @@
 
 - ✅ 解决机场私有 DNS 或节点域名 hosts 映射导致的节点解析问题（单地址 hosts 映射写入节点 `server`，多地址保留为节点精确 hosts）
 - ✅ 根据节点匹配情况动态生成地区策略组
+- ✅ 支持启用极简模式，仅生成默认代理、直连和 GLOBAL 策略组，保留基础的国内外分流
 - ✅ 支持自定义是否生成地区自动选择策略组
 - ✅ 支持自定义是否生成地区负载均衡策略组
 - ✅ 支持自定义是否隐藏地区手动选择策略组
@@ -220,6 +221,8 @@ npm run check
 - `Instagram`
 - `Netflix`
 - `Twitter`
+- `Meta` （Facebook/Instagram/WhatsApp/Messenger/Threads）
+- `Line`
 - `Emby`
 - `PikPak`
 - `Spotify`
@@ -267,3 +270,7 @@ npm run check
 - [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters)
 
 - [Koolson/Qure](https://github.com/Koolson/Qure)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=aisouler/myclash&type=date&legend=top-left)](https://www.star-history.com/?repos=aisouler%2Fmyclash&type=date&legend=top-left)

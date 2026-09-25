@@ -54,7 +54,7 @@ npm ci
 - GLOBAL 策略组聚合所有策略组
 - DNS 与 hosts（全量版从匹配节点域名的 policy 提取私有 DNS，不提升普通 nameserver；节点域名 policy/fake-ip-filter 保留；hosts 映射改写 server）
 - 配置选项开关（极简模式 / 过滤高倍率 / 自动选择组 / 地区负载均衡组 / 隐藏手动组 / 分流组添加所有节点 / QUIC 及 cn_additional 规则集 / 关闭分流组）
-- 全量版个人设置（OneDrive、DLsite、服务默认开关、URL 测试阈值及不主动生成 LAN/controller/UI 字段）
+- 全量版默认设置（OneDrive、DLsite、服务默认开关、URL 测试阈值及不主动生成 LAN/controller/UI 字段）
 - 精简版 DNS 与 hosts（`default-nameserver` 与 `proxy-server-nameserver` 分别使用固定公共 DNS；私有 DNS 在无节点专属 policy 时合并写入节点域名 policy、有专属 policy 时优先保留、公共 DNS 过滤；节点域名 policy/fake-ip-filter 保留（节点域名仅取映射后的 server 且排除 IP 类型）、hosts 映射改写 server；仅当 `proxy-server-nameserver` 有且仅有一个条目且包含 `listen` 值，或条目含 `127.0.0.1` 且 `listen` 含 `0.0.0.0` 时才触发改写，未命中时跳过改写）
 - 自定义节点：未配置时不生成自定义节点组；配置后生成自定义节点组（链式代理启用时名“链式落地”，否则“自建节点”）、重名加“自建-”前缀、不参与 hosts 改写与 DNS 域名处理、默认代理/GLOBAL/手动选择包含自定义节点
 - 异常场景（空节点、仅 DIRECT/REJECT/rematch 类型、全部可过滤节点 → 抛错）
@@ -102,13 +102,14 @@ npm run test:core
 内核测试覆盖：
 
 - 生成配置实际加载、严格固定、同区主备、HTTP 状态码判定和主节点恢复。
+- 自动选择组的 60 秒周期检测、延迟容差、故障切换和节点恢复。
 - 订阅重排、节点消失、旧地区选择失效、冷启动时恢复客户端 selected-map。
 - 私有节点 DNS、服务 DNS 出口、已有 DoH 连接保持及重载后使用新出口。
 - 下载直连、直连失败不自动改走代理、账号域名保留服务分流。
 - 复制 Node 到测试目录并命名为 OneDrive.exe，验证实际 Windows 进程识别；普通 node.exe 作为反向对照。测试不启动或修改真实 OneDrive。
 - 已有流式连接与新连接在切换节点后的行为。
 
-所有节点、DNS 和 HTTP 服务均为回环测试服务。快速检测用 2 秒的测试周期验证实际定时检查，生成配置的 400/120 秒参数由脚本测试校验。客户端 UI 的手动延迟接口不能代替预期状态码的定时检查。
+所有节点、DNS 和 HTTP 服务均为回环测试服务。主备组使用 2 秒测试周期验证定时检查，生成配置的 400/120 秒参数由脚本测试校验；自动选择组使用实际 60 秒周期验证定时检查。客户端 UI 的手动延迟接口不能代替预期状态码的定时检查。
 
 实际订阅和外网检查需要显式提供订阅文件以及下载规则集使用的代理：
 

@@ -85,7 +85,10 @@ const personalConfig = {
     expectedStatus: 200,
     interval: 400,
     timeout: 3000,
-    tolerance: 50,
+    tolerance: 150,
+    autoUrl: 'https://www.gstatic.com/generate_204',
+    autoExpectedStatus: 204,
+    autoInterval: 60,
     maxFailedTimes: 2,
     fallbackInterval: 400,
     fastFallbackInterval: 120,
@@ -127,6 +130,8 @@ const prefixRules = [
   'RULE-SET,apple_cn,直连',
   'RULE-SET,microsoft_cn,直连',
   'DOMAIN,fsend.cn,直连',
+  'DOMAIN-SUFFIX,lsposed.org,直连',
+  'DOMAIN-SUFFIX,lsposed.zip,直连',
   'DOMAIN,international-gfe.download.nvidia.com,直连',
 
   // 学术出版、文献检索与预印本
@@ -437,6 +442,10 @@ const selectBaseOption = {
 const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
+  url: personalConfig.health.autoUrl,
+  'expected-status': personalConfig.health.autoExpectedStatus,
+  interval: personalConfig.health.autoInterval,
+  lazy: false,
   tolerance: personalConfig.health.tolerance,
   'exclude-type': 'DIRECT',
   icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',

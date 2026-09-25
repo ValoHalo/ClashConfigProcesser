@@ -73,8 +73,18 @@ async function fixtures() {
         return;
       }
       if (req.url.startsWith('/health')) {
-        res.writeHead(states.get(route)?.healthStatus ?? 200);
-        res.end('health');
+        const state = states.get(route);
+        seen.push({ kind: 'health', route, url: req.url, time: Date.now() });
+        res.on('finish', () => seen.push({ kind: 'health-complete', route, url: req.url, time: Date.now() }));
+        if (state?.healthTimeout) return;
+        if (req.url.startsWith('/health-auto')) {
+          if (state?.autoDelay) await new Promise((resolve) => setTimeout(resolve, state.autoDelay));
+          res.writeHead(state?.autoStatus ?? 204);
+          res.end();
+        } else {
+          res.writeHead(state?.healthStatus ?? 200);
+          res.end('health');
+        }
         return;
       }
       seen.push({ kind: 'http', route, host: req.headers.host, url: req.url });

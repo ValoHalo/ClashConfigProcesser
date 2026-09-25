@@ -32,6 +32,7 @@ async function main() {
       code.replace(
         'const privateNetworkRules =',
         `personalConfig.health.url = ${JSON.stringify(healthUrl)};
+personalConfig.health.autoUrl = ${JSON.stringify(healthUrl + '-auto')};
 personalConfig.health.fastFallbackInterval = 2;
 personalConfig.dns.proxy = [${JSON.stringify(`http://dns.example.net:${fx.origin.port}/dns-query`)}];
 personalConfig.dns.direct = [${JSON.stringify(`127.0.0.1:${fx.udpPort}#DIRECT`)}];
@@ -286,6 +287,51 @@ const privateNetworkRules =`,
       fx.states.get('US 01').online = true;
       fx.states.get('US 02').online = true;
       fx.states.get('JP 01').online = true;
+    });
+    await test('US automatic group detects a timed-out node on its 60-second schedule without traffic', async () => {
+      fx.states.get('US 02').autoDelay = 75;
+      const config = build();
+      const autoName = '美国-自动选择';
+      config['proxy-groups'].find((group) => group.name === autoName).url += '?us-periodic';
+      await core.load(config);
+      await until(async () => ['US 01', 'US 02'].every((node) =>
+        fx.seen.some((entry) => entry.kind === 'health-complete' && entry.route === node &&
+          entry.url === '/health-auto?us-periodic')));
+      assert.equal(await selected(autoName), '🇺🇸 US 01');
+      const failedAt = Date.now();
+      fx.states.get('US 01').healthTimeout = true;
+      await assert.rejects(
+        apiRequest(
+          '/proxies/' + encodeURIComponent('🇺🇸 US 01') + '/delay?url=' +
+          encodeURIComponent(healthUrl + '-manual') + '&timeout=500',
+        ),
+        /Controller 504.*Timeout/,
+      );
+      assert.equal(await selected(autoName), '🇺🇸 US 01');
+      await until(async () => (await selected(autoName)) === '🇺🇸 US 02', 75000);
+      assert(Date.now() - failedAt >= 40000, 'Recovery must follow a later periodic check, not the initial check');
+      await core.select('默认代理', '美国');
+      await core.select('美国', autoName);
+      assert.equal(await route('app-fixture.example.net'), 'US 02');
+    });
+    await test('US automatic group retains a healthy backup after marginally faster recovery and leaves a failed backup', async () => {
+      const autoName = '美国-自动选择';
+      const delayPath =
+        '/group/' + encodeURIComponent(autoName) + '/delay?url=' +
+        encodeURIComponent(healthUrl + '-auto?us-periodic') + '&timeout=3500';
+      fx.states.get('US 01').healthTimeout = false;
+      const delays = await apiRequest(delayPath);
+      assert(delays['🇺🇸 US 01'] >= 0 && delays['🇺🇸 US 02'] >= 0);
+      assert(delays['🇺🇸 US 02'] - delays['🇺🇸 US 01'] < 150, JSON.stringify(delays));
+      await new Promise((resolve) => setTimeout(resolve, 10500));
+      assert.equal(await selected(autoName), '🇺🇸 US 02');
+      assert.equal(await route('app-fixture.example.net'), 'US 02');
+      fx.states.get('US 02').healthTimeout = true;
+      await apiRequest(delayPath);
+      await until(async () => (await selected(autoName)) === '🇺🇸 US 01');
+      assert.equal(await route('app-fixture.example.net'), 'US 01');
+      fx.states.get('US 02').healthTimeout = false;
+      fx.states.get('US 02').autoDelay = 0;
     });
     await test('Download domain is direct while account traffic keeps its service route', async () => {
       await core.load(build(), { 默认代理: '香港', 香港: '🇭🇰 HK 01', Microsoft: '默认代理' });

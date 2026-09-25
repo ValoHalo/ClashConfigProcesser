@@ -404,8 +404,8 @@ function runIntegrationTests(h, api, meta, fx, loadScript, scriptFile) {
       }
       const auto = groupByName(out['proxy-groups'], '香港-自动选择');
       h.assertEqual(auto['max-failed-times'], 2);
-      h.assertEqual(auto.interval, 400);
-      h.assertEqual(auto.tolerance, 50);
+      h.assertEqual(auto.interval, 60);
+      h.assertEqual(auto.tolerance, 150);
       h.assertEqual(groupByName(out['proxy-groups'], 'OneDrive')['default-selected'], '直连');
       h.assert(out['rule-providers'].adblockmihomo);
       h.assertDeep(out.dns['direct-nameserver'], [

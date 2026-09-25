@@ -64,7 +64,7 @@ function runPersonalPolicyTests(h, fx, loadScript, scriptFile) {
   h.test('快速检测只影响个人主备组', () => {
     const out = output({ 固定出口同区备用: true, 快速故障恢复: true });
     h.assertEqual(group(out, 'AI').interval, 120);
-    h.assertEqual(group(out, '美国-自动选择').interval, 400);
+    h.assertEqual(group(out, '美国-自动选择').interval, 60);
     h.assertEqual(group(output({ 快速故障恢复: true }), 'AI').interval, 0);
   });
   h.test('节点优先级接受原始名称并限制在目标地区', () => {
@@ -116,11 +116,11 @@ function runPersonalPolicyTests(h, fx, loadScript, scriptFile) {
   h.test('个人检测明确要求状态码且保持超时/容差', () => {
     const out = output({ 固定出口同区备用: true });
     for (const name of ['AI', '美国-自动选择']) {
-      h.assertEqual(group(out, name)['expected-status'], 200);
+      h.assertEqual(group(out, name)['expected-status'], name === 'AI' ? 200 : 204);
       h.assertEqual(group(out, name).timeout, 3000);
       h.assertEqual(group(out, name)['max-failed-times'], 2);
     }
-    h.assertEqual(group(out, '美国-自动选择').tolerance, 50);
+    h.assertEqual(group(out, '美国-自动选择').tolerance, 150);
   });
 
   h.section('个人策略 · DNS 出口与私有解析');

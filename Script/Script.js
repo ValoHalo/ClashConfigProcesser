@@ -55,6 +55,8 @@ const prefixRules = [
   'RULE-SET,apple_cn,直连',
   'RULE-SET,microsoft_cn,直连',
   'DOMAIN,fsend.cn,直连',
+  'DOMAIN-SUFFIX,lsposed.org,直连',
+  'DOMAIN-SUFFIX,lsposed.zip,直连',
   'DOMAIN,international-gfe.download.nvidia.com,直连',
 
   // 学术出版、文献检索与预印本
@@ -338,7 +340,12 @@ const selectBaseOption = {
 const urlTestBaseOption = {
   ...groupBaseOption,
   type: 'url-test',
-  tolerance: 50,
+  url: 'https://www.gstatic.com/generate_204',
+  'expected-status': 204,
+  interval: 60,
+  lazy: false,
+  'max-failed-times': 2,
+  tolerance: 150,
   'exclude-type': 'DIRECT',
   icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png',
   hidden: true,
